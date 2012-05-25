@@ -14,7 +14,7 @@ sub loc {
     return $lh->maketext(@_);
 }
 
-sub loc_lang { 
+sub loc_lang {
     $lh = __PACKAGE__->get_handle(@_);
 
     return;
@@ -23,15 +23,17 @@ sub loc_lang {
 sub add_directory {
     my $directory = shift;
 
-    my $pattern = File::Spec->catfile($directory, '*.[pm]o');
-    $pattern =~ s{\\}{/}g;	# Deal with Windows paths
+    my $pattern = File::Spec->catfile( $directory, '*.[pm]o' );
+    $pattern =~ s{\\}{/}g;    # Deal with Windows paths
 
-    Locale::Maketext::Lexicon->import({
-        '*' => [ Gettext => $pattern ],
-        _auto   => 1,
-	_style  => 'gettext',
-        _decode => 0,
-    });
+    Locale::Maketext::Lexicon->import(
+        {
+            '*'     => [ Gettext => $pattern ],
+            _auto   => 1,
+            _style  => 'gettext',
+            _decode => 0,
+        }
+    );
 
     return;
 }

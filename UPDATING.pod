@@ -6,6 +6,10 @@ UPDATING
 
 Notes on updating from previous versions of SVN::Web
 
+=head1 WARNING
+
+This is out of date for 0.60
+
 =head1 DESCRIPTION
 
 If you have not modified the supplied template files the update can

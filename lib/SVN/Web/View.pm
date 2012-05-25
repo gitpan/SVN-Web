@@ -101,7 +101,7 @@ None.
 =cut
 
 sub _log {
-    my($self, $paths, $rev, $author, $date, $msg, $pool) = @_;
+    my ( $self, $paths, $rev, $author, $date, $msg, $pool ) = @_;
 
     return unless $rev > 0;
 
@@ -117,7 +117,7 @@ sub cache_key {
     my $self = shift;
     my $path = $self->{path};
 
-    my(undef, undef, $act_rev, $head) = $self->get_revs();
+    my ( undef, undef, $act_rev, $head ) = $self->get_revs();
 
     return "$act_rev:$head:$path";
 }
@@ -129,37 +129,38 @@ sub run {
     my $uri  = $self->{repos}{uri};
     my $path = $self->{path};
 
-    my($exp_rev, $yng_rev, $act_rev, $head) = $self->get_revs();
+    my ( $exp_rev, $yng_rev, $act_rev, $head ) = $self->get_revs();
 
     my $rev = $act_rev;
 
     # Get the log for this revision of the file
-    $ra->get_log([$path], $rev, $rev, 1, 1, 1,
-        sub { $self->{REV} = $self->_log(@_) });
+    $ra->get_log( [ $self->rpath ],
+        $rev, $rev, 1, 1, 1, sub { $self->{REV} = $self->_log(@_) } );
 
     # Get the text for this revision of the file
-    my($fh, $fc) = (undef, '');
-    open($fh, '>', \$fc);
-    $ctx->cat($fh, $uri . $path, $rev);
+    my ( $fh, $fc ) = ( undef, '' );
+    open( $fh, '>', \$fc );
+    $ctx->cat( $fh, $uri . $path, $rev );
     close($fc);
 
     my $mime_type;
-    my $props = $ctx->propget('svn:mime-type', $uri . $path, $rev, 0);
-    if(exists $props->{$uri . $path}) {
-	$mime_type = $props->{$uri . $path};
-    } else {
-	$mime_type = 'text/plain';
+    my $props = $ctx->propget( 'svn:mime-type', $uri . $path, $rev, 0 );
+    if ( exists $props->{ $uri . $path } ) {
+        $mime_type = $props->{ $uri . $path };
+    }
+    else {
+        $mime_type = 'text/plain';
     }
 
     return {
         template => 'view',
         data     => {
-	    context      => 'file',
+            context      => 'file',
             rev          => $act_rev,
             youngest_rev => $yng_rev,
-	    at_head      => $head,
+            at_head      => $head,
             mimetype     => $mime_type,
-            file => $fc,
+            file         => $fc,
             %{ $self->{REV} },
         }
     };

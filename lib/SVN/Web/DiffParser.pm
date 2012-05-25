@@ -1,4 +1,5 @@
 package SVN::Web::DiffParser;
+
 # $Id: Parser.pm,v 1.3 2006/04/13 01:47:37 fil Exp $
 
 use 5.00404;
@@ -8,25 +9,27 @@ use vars qw( $VERSION );
 use Carp;
 use IO::File;
 
-$VERSION = '0.53';
-$VERSION = eval $VERSION;  # see L<perlmodstyle>
+$VERSION = 0.53;
+#$VERSION = '0.53';
+#$VERSION = eval $VERSION;    # see L<perlmodstyle>
 
 ####################################################
-sub new
-{
-    my( $package, @args ) = @_;
+sub new {
+    my ( $package, @args ) = @_;
 
-    my $self = bless { changes=>[], 
-                       source=>'' }, $package;
+    my $self = bless {
+        changes => [],
+        source  => ''
+    }, $package;
 
     my $parms;
-    if( 1==@args ) {
-        if( 'HASH' eq ref $args[0] ) {
+    if ( 1 == @args ) {
+        if ( 'HASH' eq ref $args[0] ) {
             $parms = $args[0];
         }
         else {
             my $diff = $args[0];
-            if( ref $diff or $diff !~ /\n/ ) {
+            if ( ref $diff or $diff !~ /\n/ ) {
                 $parms = { File => $diff };
             }
             else {
@@ -35,104 +38,104 @@ sub new
         }
     }
     else {
-        $parms = { @args };
+        $parms = {@args};
     }
 
-    $self->__init( $parms );
+    $self->__init($parms);
     return $self;
 }
 
-sub __init 
-{
-    my( $self, $parms ) = @_;
+sub __init {
+    my ( $self, $parms ) = @_;
 
     $self->{verbose}  = 1 if $parms->{Verbose};
     $self->{simplify} = $parms->{Simplify};
     $self->{strip}    = $parms->{Strip};
 
-    if( $parms->{ File } ) {
+    if ( $parms->{File} ) {
         $self->parse_file( $parms->{File} );
     }
-    elsif( $parms->{ Diff } ) {
+    elsif ( $parms->{Diff} ) {
         $self->parse( $parms->{Diff} );
     }
     return $self;
 }
 
 ####################################################
-sub source
-{
-    my( $self ) = @_;
+sub source {
+    my ($self) = @_;
     return $self->{source};
 }
 
 ####################################################
-sub changes
-{
-    my( $self, $file ) = @_;
+sub changes {
+    my ( $self, $file ) = @_;
     my $ret = $self->{changes};
-    if( $file ) {
+    if ($file) {
         $ret = [];
         foreach my $ch ( @{ $self->{changes} } ) {
-            next unless $ch->filename1 eq $file or
-                        $ch->filename2 eq $file;
+            next
+              unless $ch->filename1 eq $file
+                  or $ch->filename2 eq $file;
             push @$ret, $ch;
         }
     }
 
     return @$ret if wantarray;
-    return 0+@$ret;
+    return 0 + @$ret;
 }
 
-
 ####################################################
-sub files
-{
-    my( $self ) = @_;
+sub files {
+    my ($self) = @_;
     my %ret;
     foreach my $ch ( $self->changes ) {
-        $ret{$ch->filename1} = $ch->filename2;
+        $ret{ $ch->filename1 } = $ch->filename2;
     }
     return %ret;
 }
 
-
 ####################################################
-sub simplify
-{
-    my( $self ) = @_;
+sub simplify {
+    my ($self) = @_;
 
     my @keep;
     my $prev;
     foreach my $ch ( $self->changes ) {
-        if( $ch->type eq '' ) {                 # skip no-change
-            undef( $prev );
+        if ( $ch->type eq '' ) {    # skip no-change
+            undef($prev);
             next;
         }
-    
-        if( $prev ) {
+
+        if ($prev) {
             my $size = $prev->size;
             ## Combine ADD/REMOVE lines
-            if( $prev->type ne $ch->type and # ADD->REMOVE or REMOVE->ADD
-                $prev->filename1 eq $ch->filename1 and
-                $prev->filename2 eq $ch->filename2 and
-                           $size == $ch->size ) {  #close
+            if (
+                $prev->type ne $ch->type and    # ADD->REMOVE or REMOVE->ADD
+                $prev->filename1 eq $ch->filename1
+                and $prev->filename2 eq $ch->filename2
+                and $size == $ch->size
+              )
+            {                                   #close
 
-                if( $prev->type eq 'REMOVE' and
-                        $prev->line2 == $ch->line2 and
-                        ($prev->line1+$size) == $ch->line1 ) {
-                    $prev->{type} = 'MODIFY';
+                if (    $prev->type eq 'REMOVE'
+                    and $prev->line2 == $ch->line2
+                    and ( $prev->line1 + $size ) == $ch->line1 )
+                {
+                    $prev->{type}  = 'MODIFY';
                     $prev->{lines} = $ch->{lines};
-                    undef( $prev );
+                    undef($prev);
                     next;
                 }
-                elsif( $prev->type eq 'ADD' and
-                        ($prev->line2+$size) == $ch->line2 and
-                        $prev->line1 == $ch->line1 ) {
+                elsif ( $prev->type eq 'ADD'
+                    and ( $prev->line2 + $size ) == $ch->line2
+                    and $prev->line1 == $ch->line1 )
+                {
                     $prev->{type} = 'MODIFY';
-                    undef( $prev );
+                    undef($prev);
                     next;
                 }
+
                 # same size, same file, but not at the same spot
             }
         }
@@ -142,29 +145,27 @@ sub simplify
     $self->{changes} = \@keep;
 }
 
-
 ####################################################
-sub parse_file
-{
-    my( $self, $file ) = @_;
+sub parse_file {
+    my ( $self, $file ) = @_;
 
     my $fh;
-    if( ref $file ) {               # assume it's a file handle
+    if ( ref $file ) {    # assume it's a file handle
         $self->{source} = 'user filehandle';
         $fh = $file;
     }
     else {
         $self->{source} = $file;
         $fh = IO::File->new;
-        $fh->open( $file ) or croak "Unable to open $file: $!";
+        $fh->open($file) or croak "Unable to open $file: $!";
     }
 
-    $self->{changes}=[];
-    $self->{state}={ OK=>1 };
+    $self->{changes} = [];
+    $self->{state} = { OK => 1 };
 
-    while( <$fh> ) {
+    while (<$fh>) {
         $self->{state}{context} = "line $. of $self->{source}";
-        $self->_parse_line( $_ );
+        $self->_parse_line($_);
     }
     my $ok = $self->{state}{OK};
     delete $self->{state};
@@ -172,19 +173,17 @@ sub parse_file
     return $ok;
 }
 
-
 ####################################################
-sub parse
-{
-    my( $self, $text ) = @_;
-    $self->{source} = "user string";
-    $self->{changes}=[];
-    $self->{state}={ OK=>1 };
+sub parse {
+    my ( $self, $text ) = @_;
+    $self->{source}  = "user string";
+    $self->{changes} = [];
+    $self->{state}   = { OK => 1 };
 
-    my $l=1;
-    while( $text =~ /(.+?\n)/g ) {
+    my $l = 1;
+    while ( $text =~ /(.+?\n)/g ) {
         $self->{state}{context} = "line $l of string";
-        $self->_parse_line( $1 );
+        $self->_parse_line($1);
         $l++;
     }
     my $ok = $self->{state}{OK};
@@ -195,64 +194,70 @@ sub parse
 }
 
 ####################################################
-sub _parse_line
-{
-    my( $self, $line ) = @_;
+sub _parse_line {
+    my ( $self, $line ) = @_;
     $self->{verbose} and warn "Parsing $line";
 
     my $state = $self->{state};
 
-    if( $state->{unified} ) {
-        $self->_unified_line( $line );        
+    if ( $state->{unified} ) {
+        $self->_unified_line($line);
         return if $state->{unified};
     }
-    elsif( $state->{standard} ) {
-        $self->_standard_line( $line );        
+    elsif ( $state->{standard} ) {
+        $self->_standard_line($line);
         return if $state->{standard};
     }
 
     my $file = '(?:-r\d(?:\.\d+)+)|(?:[^-].+)';
 
-    if( $line =~ /^diff\s+($file)\s+($file)\s*$/ ) {
+    if ( $line =~ /^diff\s+($file)\s+($file)\s*$/ ) {
         my @match = ( $1, $2 );
         $self->{verbose} and warn "Diff $1 $2";
         $state->{filename1} = $self->_filename( $match[0] );
         $state->{filename2} = $self->_filename( $match[1] );
-    } 
-    elsif( $line =~ /^(\d+)(?:,\d+)?[acd](\d+)(?:,\d+)?$/  ) {
+    }
+    elsif ( $line =~ /^(\d+)(?:,\d+)?[acd](\d+)(?:,\d+)?$/ ) {
         $state->{standard} = 1;
-        push @{ $self->{changes} }, bless {
-                            at1 => $1, line1 => $1,
-                            at2 => $2, line2 => $2,
-                            filename1 => $state->{filename1},
-                            filename2 => $state->{filename2},
-                            timestamp1 => '',
-                            timestamp2 => ''
-                        }, 'SVN::Web::DiffParser::Change';        
+        push @{ $self->{changes} },
+          bless {
+            at1        => $1,
+            line1      => $1,
+            at2        => $2,
+            line2      => $2,
+            filename1  => $state->{filename1},
+            filename2  => $state->{filename2},
+            timestamp1 => '',
+            timestamp2 => ''
+          },
+          'SVN::Web::DiffParser::Change';
         $self->{verbose} and warn "Standard diff line1=$1 line2=$2";
     }
-    elsif( $line =~ /^--- (.+?)\t(.+)$/ or 
-            $line =~ /^--- ([^\s]+)\s+(.+)$/) {
+    elsif ($line =~ /^--- (.+?)\t(.+)$/
+        or $line =~ /^--- ([^\s]+)\s+(.+)$/ )
+    {
         $state->{unified} = 1;
         my $stamp = $2;
-        my $name = $self->_filename( $1 );
+        my $name  = $self->_filename($1);
         $self->{verbose} and warn "Unified diff";
-        push @{ $self->{changes} }, bless {
-                            type=>'',
-                            filename1=>$name,
-                            timestamp1=>$stamp,
-                        }, 'SVN::Web::DiffParser::Change';
+        push @{ $self->{changes} },
+          bless {
+            type       => '',
+            filename1  => $name,
+            timestamp1 => $stamp,
+          },
+          'SVN::Web::DiffParser::Change';
     }
-    elsif( $line =~ /^\*\*\* (.+?)\t(.+)$/ or 
-            $line =~ /^\*\*\* ([^\s]+)\s+(.+)$/) {
+    elsif ($line =~ /^\*\*\* (.+?)\t(.+)$/
+        or $line =~ /^\*\*\* ([^\s]+)\s+(.+)$/ )
+    {
         die "Context diff not yet supported at $state->{context}";
     }
 }
 
 ####################################################
-sub _filename
-{
-    my( $self, $file ) = @_;
+sub _filename {
+    my ( $self, $file ) = @_;
     return $file unless $self->{strip};
     my $n = $self->{strip};
     $file =~ s(^[^/]+/)() while $n--;
@@ -260,21 +265,20 @@ sub _filename
 }
 
 ####################################################
-sub _standard_line
-{
-    my( $self, $line ) = @_;
+sub _standard_line {
+    my ( $self, $line ) = @_;
 
-    my %types = ( ' '=>'', '>'=>'ADD', '<'=>'REMOVE' );
+    my %types = ( ' ' => '', '>' => 'ADD', '<' => 'REMOVE' );
 
     my $change = $self->{changes}[-1];
- 
-    if( $line =~ /^([<>])(.+)$/ ) {
-        my( $mod, $text ) = ( $1, $2 );
+
+    if ( $line =~ /^([<>])(.+)$/ ) {
+        my ( $mod, $text ) = ( $1, $2 );
         $mod = $types{$mod};
         $self->_new_line( $mod, $text );
         return;
     }
-    if( $line =~ /^---$/ ) {            # pivot
+    if ( $line =~ /^---$/ ) {    # pivot
         $self->{verbose} and warn "Pivot";
         return;
     }
@@ -282,111 +286,128 @@ sub _standard_line
 }
 
 ####################################################
-sub _unified_line
-{
-    my( $self, $line ) = @_;
- 
-    my %types = ( ' '=>'', '+'=>'ADD', '-'=>'REMOVE' );
+sub _unified_line {
+    my ( $self, $line ) = @_;
+
+    my %types = ( ' ' => '', '+' => 'ADD', '-' => 'REMOVE' );
 
     my $change = $self->{changes}[-1];
-    if( $line =~ /^\+\+\+ (.+?)\t(.+)$/ or 
-            $line =~ /^\+\+\+ ([^\s]+)\s+(.+)$/) {
+    if (   $line =~ /^\+\+\+ (.+?)\t(.+)$/
+        or $line =~ /^\+\+\+ ([^\s]+)\s+(.+)$/ )
+    {
         $change->{timestamp2} = $2;
-        $change->{filename2} = $self->_filename( $1 );
-        $change->{lines} = [];
+        $change->{filename2}  = $self->_filename($1);
+        $change->{lines}      = [];
         return;
     }
-    die "Missing +++ line before $line" 
-	unless exists $change->{filename2} and defined $change->{filename2};
-    if( $line =~ /^\@\@ -(\d+),(\d+) [+](\d+),(\d+) \@\@$/ ) {
-        my @match = ($1, $2, $3, $4);
-        if( @{ $change->{lines} } ) {
+    die "Missing +++ line before $line"
+      unless exists $change->{filename2} and defined $change->{filename2};
+    my @match = $self->_detect_hunk_line($line);
+    if (@match) {
+        if ( @{ $change->{lines} } ) {
             $change = $self->_new_chunk;
         }
-        @{ $change }{ qw( line1 size1 line2 size2 ) } = @match;
-        $change->{at1} = $change->{line1};
-        $change->{at2} = $change->{line2};
-        return;
-    }
-
-    # Files that have been newly added and only contain one line have
-    # a hunk marker that looks like "@@ -0,0 +1 @@". Handle that.
-    # This code should be refactored with the code above, since only
-    # the regexp and the assignment to @match are different.
-    if( $line =~ /^\@\@ -(\d+),(\d+) [+](\d+) \@\@$/ ) {
-        my @match = ($1, $2, $3, 1);
-        if( @{ $change->{lines} } ) {
-            $change = $self->_new_chunk;
-        }
-        @{ $change }{ qw( line1 size1 line2 size2 ) } = @match;
+        @{$change}{qw( line1 size1 line2 size2 )} = @match;
         $change->{at1} = $change->{line1};
         $change->{at2} = $change->{line2};
         return;
     }
 
     die "Missing \@\@ line before $line at $self->{state}{context}\n"
-	unless exists $change->{line1} and defined $change->{line1};
+      unless exists $change->{line1} and defined $change->{line1};
 
-    if( $line =~ /^([-+ ])(.*)$/) {
-        my( $mod, $text ) = ( $1, $2 );
+    if ( $line =~ /^([-+ ])(.*)$/ ) {
+        my ( $mod, $text ) = ( $1, $2 );
         $mod = $types{$mod};
         $self->_new_line( $mod, $text );
         return;
     }
+
     # Anything else is the end of the diff, so fall through to the
     # diff detection bit
     $self->{state}{unified} = 0;
 }
 
-sub _new_type
-{
-    my( $self, $mod ) = @_;
+sub _detect_hunk_line {
+    my ( $self, $line ) = @_;
+
+    # pretty standard change
+    # "@@ -l1,n1 +l2,n2 @@"
+    if ( $line =~ /^\@\@ -(\d+),(\d+) [+](\d+),(\d+) \@\@$/ ) {
+        return ( $1, $2, $3, $4 );
+    }
+
+    # New files with only one line.
+    # "@@ -0,0 +1 @@"
+    if ( $line =~ /^\@\@ -(\d+),(\d+) [+](\d+) \@\@$/ ) {
+        return ( $1, $2, $3, 1 );
+    }
+
+    # Files that are only one line long, but get changed.
+    # "@@ -1 +1 @@"
+    if ( $line =~ /^\@\@ -(\d+) [+](\d+) \@\@$/ ) {
+        return ( $1, 1, $2, 1 );
+    }
+
+    # Files that are only one line long, and get new line.
+    # "@@ -1 +1,n @@"
+    if ( $line =~ /^\@\@ -(\d+) [+](\d+),(\d+) \@\@$/ ) {
+        return ( $1, 1, $2, $3 );
+    }
+
+    return ();
+}
+
+sub _new_type {
+    my ( $self, $mod ) = @_;
     my $change = $self->{changes}[-1];
 
-    push @{ $self->{changes} }, bless { 
-                                    filename1 => $change->{filename1},
-                                    filename2 => $change->{filename2},
-                                    line1 => $change->{at1},
-                                    line2 => $change->{at2},
-                                    at1 => $change->{at1},
-                                    at2 => $change->{at2},
-                                    type => $mod,
-                                    lines => []
-                                }, 'SVN::Web::DiffParser::Change';
+    push @{ $self->{changes} },
+      bless {
+        filename1 => $change->{filename1},
+        filename2 => $change->{filename2},
+        line1     => $change->{at1},
+        line2     => $change->{at2},
+        at1       => $change->{at1},
+        at2       => $change->{at2},
+        type      => $mod,
+        lines     => []
+      },
+      'SVN::Web::DiffParser::Change';
     return $self->{changes}[-1];
 }
 
-sub _new_chunk
-{
-    my( $self ) = @_;
+sub _new_chunk {
+    my ($self) = @_;
     my $change = $self->{changes}[-1];
-    push @{ $self->{changes} }, bless {
-                                    type => '',
-                                    filename1 => $change->{filename1},
-                                    filename2 => $change->{filename2},
-                                    lines => []
-                                }, 'SVN::Web::DiffParser::Change';
+    push @{ $self->{changes} },
+      bless {
+        type      => '',
+        filename1 => $change->{filename1},
+        filename2 => $change->{filename2},
+        lines     => []
+      },
+      'SVN::Web::DiffParser::Change';
     return $self->{changes}[-1];
 }
 
-sub _new_line
-{
-    my( $self, $mod, $text ) = @_;
+sub _new_line {
+    my ( $self, $mod, $text ) = @_;
 
     $self->{verbose} and warn "_new_line";
     my $change = $self->{changes}[-1];
-    if( defined $change->{type} ) {
-        if( $change->{type} ne $mod ) {
+    if ( defined $change->{type} ) {
+        if ( $change->{type} ne $mod ) {
             $self->{verbose} and warn "_new_type";
-            $change = $self->_new_type( $mod );
+            $change = $self->_new_type($mod);
         }
     }
     else {
         $change->{type} = $mod;
     }
 
-    $change->{at1}++ unless $mod eq 'ADD';    # - or ' ', advance in file1
-    $change->{at2}++ unless $mod eq 'REMOVE'; # + or ' ', advance in file2
+    $change->{at1}++ unless $mod eq 'ADD';       # - or ' ', advance in file1
+    $change->{at2}++ unless $mod eq 'REMOVE';    # + or ' ', advance in file2
     push @{ $change->{lines} }, $text;
 }
 
@@ -397,29 +418,26 @@ use strict;
 
 sub filename1 { $_[0]->{filename1} }
 sub filename2 { $_[0]->{filename2} }
-sub line1 { $_[0]->{line1} }
-sub line2 { $_[0]->{line2} }
-sub size  { 0+@{$_[0]->{lines}} }
+sub line1     { $_[0]->{line1} }
+sub line2     { $_[0]->{line2} }
+sub size      { 0 + @{ $_[0]->{lines} } }
 
-sub type  
-{ 
-    my( $self ) = @_;
+sub type {
+    my ($self) = @_;
 
-    return $self->{type} if $self->{type} eq 'ADD' or
-                            $self->{type} eq 'REMOVE' or
-                            $self->{type} eq 'MODIFY';
+    return $self->{type}
+      if $self->{type} eq 'ADD'
+          or $self->{type} eq 'REMOVE'
+          or $self->{type} eq 'MODIFY';
     return '';
 }
-    
-sub text
-{
-    my( $self, $n ) = @_;
-    return @{ $self->{lines} } if 1==@_;
+
+sub text {
+    my ( $self, $n ) = @_;
+    return @{ $self->{lines} } if 1 == @_;
 
     return $self->{lines}[$n];
 }
-    
-
 
 1;
 __END__

@@ -145,7 +145,7 @@ None.
 =cut
 
 sub _log {
-    my($self, $paths, $rev, $author, $date, $msg, $pool) = @_;
+    my ( $self, $paths, $rev, $author, $date, $msg, $pool ) = @_;
 
     return unless $rev > 0;
 
@@ -158,21 +158,22 @@ sub _log {
 
     $data->{paths} = {
         map {
-	    $_ => { action      => $paths->{$_}->action(),
-		    copyfrom    => $paths->{$_}->copyfrom_path(),
-		    copyfromrev => $paths->{$_}->copyfrom_rev(),
-		    }
-	} keys %$paths
+            $_ => {
+                action      => $paths->{$_}->action(),
+                copyfrom    => $paths->{$_}->copyfrom_path(),
+                copyfromrev => $paths->{$_}->copyfrom_rev(),
+              }
+          } keys %$paths
     };
 
     push @{ $self->{REVS} }, $data;
 }
 
 sub cache_key {
-    my $self  = shift;
-    my $path  = $self->{path};
+    my $self = shift;
+    my $path = $self->{path};
 
-    my(undef, undef, $act_rev, $head) = $self->get_revs();
+    my ( undef, undef, $act_rev, $head ) = $self->get_revs();
 
     my $limit = $self->_get_limit();
 
@@ -186,8 +187,8 @@ sub _get_limit {
     my $self = shift;
 
     my $limit = $self->{cgi}->param('limit');
-    if(defined $limit) {
-	return $limit eq '(all)' ? 0 : $limit;
+    if ( defined $limit ) {
+        return $limit eq '(all)' ? 0 : $limit;
     }
 
     return 20;
@@ -203,50 +204,56 @@ sub run {
     my $path  = $self->{path};
 
     $path =~ s{/+$}{};
-    my(undef, $yng_rev, undef, $head) = $self->get_revs();
+    my ( undef, $yng_rev, undef, $head ) = $self->get_revs();
 
     # Handle log paging
     my $at_oldest;
-    if($limit) {		# $limit not 'all'
-	# Get one more log entry than asked for.  If we get back this
-	# many log entries then we know there's at least one more page
-	# of results to show.  If we get back $limit or less log
-	# entries then we're on the last page.
-	#
-	# If we're not on the last page then pop off the extra log entry
-	$ra->get_log([$path], $rev, 1, $limit + 1, 1, 1,
-		     sub { $self->_log(@_) });
+    if ($limit) {    # $limit not 'all'
+            # Get one more log entry than asked for.  If we get back this
+            # many log entries then we know there's at least one more page
+            # of results to show.  If we get back $limit or less log
+            # entries then we're on the last page.
+            #
+            # If we're not on the last page then pop off the extra log entry
+        $ra->get_log( [ $self->rpath ],
+            $rev, 1, $limit + 1, 1, 1, sub { $self->_log(@_) } );
 
-	$at_oldest = @{ $self->{REVS} } <= $limit;
+        $at_oldest = @{ $self->{REVS} } <= $limit;
 
-	pop @{ $self->{REVS} } unless $at_oldest;
-    } else {
-	# We must be displaying to the oldest rev, so no paging required
-	$ra->get_log([$path], $rev, 1, $limit, 1, 1,
-		     sub { $self->_log(@_) });
+        pop @{ $self->{REVS} } unless $at_oldest;
+    }
+    else {
 
-	$at_oldest = 1;
+        # We must be displaying to the oldest rev, so no paging required
+        $ra->get_log( [ $self->rpath ],
+            $rev, 1, $limit, 1, 1, sub { $self->_log(@_) } );
+
+        $at_oldest = 1;
     }
 
-#    $self->_resolve_changed_paths();
+    #    $self->_resolve_changed_paths();
 
     my $is_dir;
-    $ctx->info("$uri$path", $rev, $rev,
-	       sub {
-		   my($path, $info, $pool) = @_;
-		   $is_dir = $info->kind() == $SVN::Node::dir;
-	       }, 0);
+    $ctx->info(
+        "$uri$path",
+        $rev, $rev,
+        sub {
+            my ( $path, $info, $pool ) = @_;
+            $is_dir = $info->kind() == $SVN::Node::dir;
+        },
+        0
+    );
 
     return {
         template => 'log',
         data     => {
-	    context      => $is_dir ? 'directory' : 'file',
-            isdir        => $is_dir,
-            revs         => $self->{REVS},
-            limit        => $limit,
-            rev          => $rev,
+            context => $is_dir ? 'directory' : 'file',
+            isdir   => $is_dir,
+            revs    => $self->{REVS},
+            limit   => $limit,
+            rev     => $rev,
             youngest_rev => $yng_rev,
-	    at_oldest    => $at_oldest,
+            at_oldest    => $at_oldest,
             at_head      => $head,
         }
     };
@@ -269,16 +276,16 @@ sub _resolve_changed_paths {
     my $subpool = SVN::Pool->new();
     my $node_kind;
 
-    foreach my $data (@{ $self->{REVS} }) {
-	foreach my $path (keys %{ $data->{paths} }) {
-	    $subpool->clear();
+    foreach my $data ( @{ $self->{REVS} } ) {
+        foreach my $path ( keys %{ $data->{paths} } ) {
+            $subpool->clear();
 
+            $ctx->info( "$uri$path", $data->{rev}, $data->{rev},
+                sub { $node_kind = $_[1]->kind() },
+                0, $subpool );
 
-	    $ctx->info("$uri$path", $data->{rev}, $data->{rev},
-		       sub { $node_kind = $_[1]->kind() }, 0, $subpool);
-
-	    $data->{paths}{$path}{isdir} = $node_kind == $SVN::Node::dir;
-	}
+            $data->{paths}{$path}{isdir} = $node_kind == $SVN::Node::dir;
+        }
     }
 }
 

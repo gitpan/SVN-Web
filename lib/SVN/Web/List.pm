@@ -7,7 +7,7 @@ use base 'SVN::Web::action';
 
 use File::Basename ();
 
-our $VERSION = 0.53;
+our $VERSION = 0.54;
 
 =head1 NAME
 
@@ -23,6 +23,7 @@ In F<config.yaml>
       class: SVN::Web::List
       opts:
         redirect_to_browse_when_one_repo: 0 # or 1
+        public_repos_uri: hide_local
     ...
 
 =head1 DESCRIPTION
@@ -43,6 +44,15 @@ should immediately issue a redirect to browse that repository, thereby saving
 the user a mouse click.
 
 Defaults to 0.
+
+=item public_repos_uri
+
+Can be 'hide_local', which will hide the URL for any file:// repositories,
+'hide_all', which will hide all repositories, or a hash.  The hash should be
+keyed by the repository name, and the values should be either a URL display, or
+a false value to hide the URL.
+
+The default is to show all repository URLs.
 
 =back
 
@@ -66,22 +76,44 @@ None.
 
 =cut
 
-my %default_opts = (redirect_to_browse_when_one_repo => 0);
+my %default_opts = ( redirect_to_browse_when_one_repo => 0 );
 
 sub run {
     my $self = shift;
 
     $self->{opts} = { %default_opts, %{ $self->{opts} } };
 
-    my %repos = repos_list($self->{config});
+    my %repos = repos_list( $self->{config} );
 
     # If there's only one repo listed then jump straight to it
-    if(keys %repos == 1 and $self->{opts}{redirect_to_browse_when_one_repo}) {
+    if ( keys %repos == 1 and $self->{opts}{redirect_to_browse_when_one_repo} )
+    {
         my $url = $self->{cgi}->self_url();
         $url =~ s{/$}{};
-        $url .= '/' . (keys %repos)[0];
-        print $self->{cgi}->redirect(-uri => $url);
+        $url .= '/' . ( keys %repos )[0];
+        print $self->{cgi}->redirect( -uri => $url );
         return;
+    }
+
+    my $public_repos = $self->{opts}{public_repos_uri} || '';
+    if (lc $public_repos eq 'hide_all') {
+        for my $rep (values %repos) {
+            undef $rep;
+        }
+    }
+    elsif (lc $public_repos eq 'hide_local') {
+        for my $rep (values %repos) {
+            if ($rep =~ m{file://}) {
+                undef $rep;
+            }
+        }
+    }
+    elsif (ref $public_repos eq 'HASH') {
+        for my $repname (keys %repos) {
+            if (exists $public_repos->{$repname}) {
+                $repos{$repname} = $public_repos->{$repname};
+            }
+        }
     }
 
     return {
@@ -99,19 +131,27 @@ sub repos_list {
     my $config = shift;
 
     my %repos;
-    if($config->{reposparent}) {
+    if ( $config->{reposparent} ) {
         opendir my $dh, "$config->{reposparent}"
-            or SVN::Web::X->throw(
+          or SVN::Web::X->throw(
             error => '(opendir reposparent %1 %2)',
-            vars  => [$config->{reposparent}, $!]
-            );
+            vars  => [ $config->{reposparent}, $! ]
+          );
 
-        foreach my $dir (grep { -d File::Spec->catdir($config->{reposparent}, $_) && !/^\./ }
-            readdir $dh) {
-	    $repos{$dir} = 'file://' . File::Spec->catdir($config->{reposparent}, $dir);
+        for my $dir (
+            grep {
+                -d File::Spec->catdir( $config->{reposparent}, $_ )
+                  && !/^\./
+            } readdir $dh
+          )
+        {
+            $repos{$dir} =
+              'file://' . File::Spec->catdir( $config->{reposparent}, $dir );
         }
-    } else {
-	%repos = %{ $config->{repos} };
+    }
+    else {
+
+        %repos = %{ $config->{repos} };
     }
 
     delete @repos{ @{ $config->{block} } } if exists $config->{block};
@@ -126,6 +166,8 @@ sub repos_list {
 Copyright 2003-2004 by Chia-liang Kao C<< <clkao@clkao.org> >>.
 
 Copyright 2005-2007 by Nik Clayton C<< <nik@FreeBSD.org> >>.
+
+Copyright 2012 by Dean Hamstead C<< <dean@fragfest.com.au> >>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

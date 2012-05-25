@@ -117,7 +117,7 @@ sub cache_key {
     my $self = shift;
     my $path = $self->{path};
 
-    my(undef, undef, $act_rev, $head) = $self->get_revs();
+    my ( undef, undef, $act_rev, $head ) = $self->get_revs();
 
     return "$act_rev:$head:$path";
 }
@@ -129,39 +129,45 @@ sub run {
     my $uri  = $self->{repos}{uri};
     my $path = $self->{path};
 
-    my($exp_rev, $yng_rev, $act_rev, $head) = $self->get_revs();
+    my ( $exp_rev, $yng_rev, $act_rev, $head ) = $self->get_revs();
 
     my $rev = $act_rev;
 
     my @blame_details;
 
-    $ctx->blame("$uri$path", 1, $rev, sub {
-		    push @blame_details, {
-			line_no => $_[0],
-			rev     => $_[1],
-			author  => $_[2],
-			date    => $self->format_svn_timestamp($_[3]),
-			line    => $_[4],
-		    };
-		});
+    $ctx->blame(
+        "$uri$path",
+        1, $rev,
+        sub {
+            push @blame_details,
+              {
+                line_no => $_[0],
+                rev     => $_[1],
+                author  => $_[2],
+                date    => $self->format_svn_timestamp( $_[3] ),
+                line    => $_[4],
+              };
+        }
+    );
 
     my $mime_type;
-    my $props = $ctx->propget('svn:mime-type', $uri . $path, $rev, 0);
-    if(exists $props->{$uri . $path}) {
-	$mime_type = $props->{$uri . $path};
-    } else {
-	$mime_type = 'text/plain';
+    my $props = $ctx->propget( 'svn:mime-type', $uri . $path, $rev, 0 );
+    if ( exists $props->{ $uri . $path } ) {
+        $mime_type = $props->{ $uri . $path };
+    }
+    else {
+        $mime_type = 'text/plain';
     }
 
     return {
         template => 'blame',
         data     => {
-	    context       => 'file',
+            context       => 'file',
             rev           => $act_rev,
             youngest_rev  => $yng_rev,
-	    at_head       => $head,
+            at_head       => $head,
             mimetype      => $mime_type,
-	    blame_details => \@blame_details,
+            blame_details => \@blame_details,
         }
     };
 }

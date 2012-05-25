@@ -12,6 +12,34 @@ This is a list of the main changes between different versions of
 SVN::Web.  Please see L<UPDATING.pod> for details about any changes
 you may need to make when updating an SVN::Web installation.
 
+=head2 0.60, pending release
+
+=over
+
+=item
+
+Pulled out mod_perl1/2 and cgi, replaced with Plack. This probably broke lots of things.
+
+=item 
+
+Merged patch from rt26159
+
+=back
+
+=head2 0.54, never released
+
+=over
+
+=item
+
+Fix for RT35186, to make 'selected' compliant with XHTML
+
+=item
+
+Fix for RT37388, by Vladimir Timofeev
+
+=back
+
 =head2 0.53, released Apr 29, 2007
 
 =over
@@ -138,7 +166,7 @@ Documentation bug rt#22282, reported by Andrew Sterling Hanenkamp
 <sterling@hanenkamp.com>, has been fixed.
 
 =back
- 
+
 =head2 0.49, released Aug 23, 2006
 
 =over

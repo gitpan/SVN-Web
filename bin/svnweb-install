@@ -19,42 +19,14 @@ BEGIN {
     }
 }
 
+my $version = SVN::Web->VERSION();
+
 die "already have config.yaml" if -e 'config.yaml';
 
-open my $fh, ">config.yaml";
-
-my %targets = (
-    Template => 'template',
-    Style    => 'css',
-);
-
-while(my($from, $to) = each %targets) {
-    my $path = $INC{'SVN/Web.pm'};
-    $path =~ s{.pm$}{/$from}i or next;
-
-    find(
-        {
-            wanted => sub {
-                my $dst_path = $File::Find::name;
-                $dst_path =~ s/\Q$path\E/$to/;
-
-                if(-d $File::Find::name) {
-                    mkdir $dst_path
-                        or warn "mkdir($dst_path) failed: $!\n";
-                } else {
-                    copy($File::Find::name, $dst_path)
-                        or warn
-                        "Copying $File::Find::name -> $dst_path failed:\n$!\n";
-                }
-            },
-            no_chdir => 1
-        },
-        $path
-    );
-}
+open my $fh, '>', 'config.yaml';
 
 print $fh <<END;
-version: 0.53
+version: $version
 
 # Actions, the classes that implement them, and where they should appear
 # in the action menu
@@ -81,6 +53,8 @@ actions:
     class: SVN::Web::Diff
   list:
     class: SVN::Web::List
+    opts:
+      public_repos_uri: hide_local
   log:
     class: SVN::Web::Log
     action_menu:
@@ -146,20 +120,6 @@ END
 
 close $fh;
 
-open $fh, '>index.cgi';
-print $fh <<"END";
-$Config::Config{startperl} -w
-#use lib '.';
-#use lib '../lib';
-use CGI::Carp qw(fatalsToBrowser);
-use SVN::Web;
-SVN::Web::run_cgi();
-END
-
-close $fh;
-
-chmod 0755, 'index.cgi';
-
 # XXX: export the template too
 
 print "SVN::Web now installed! please see config.yaml\n";
@@ -169,6 +129,8 @@ print "SVN::Web now installed! please see config.yaml\n";
 Copyright 2003-2004 by Chia-liang Kao C<< <clkao@clkao.org> >>.
 
 Copyright 2005-2007 by Nik Clayton C<< <nik@FreeBSD.org> >>.
+
+Copyright 2012 by Dean Hamstead C<< <dean@fragfest.com.au> >>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

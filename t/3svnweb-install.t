@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Test::More tests => 6;
+use Test::More tests => 3;
 use Cwd;
 use File::Temp qw(tempdir);
 use YAML ();
@@ -19,14 +19,12 @@ chdir($tmpdir);
 
 system "$^X -I$cwd/blib/lib $cwd/bin/svnweb-install > /dev/null";
 
-foreach my $file (qw(config.yaml index.cgi)) {
+for my $file (qw(config.yaml)) {
     ok(-f "$tmpdir/$file", "$tmpdir/$file created");
-}
-
-foreach my $dir (qw(css template)) {
-    ok(-d "$tmpdir/$dir", "$tmpdir/$dir/ created");
 }
 
 my $config;
 $config = eval { YAML::LoadFile('config.yaml'); };
 ok(defined $config, "YAML::LoadFile('$tmpdir/config.yaml') succeeded");
+
+chdir($cwd);

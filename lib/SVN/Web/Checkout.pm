@@ -68,32 +68,33 @@ sub run {
     my $path = $self->{path};
 
     my $node_kind;
-    $ctx->info("$uri$path", $rev, $rev,
-	       sub { $node_kind = $_[1]->kind(); }, 0);
+    $ctx->info( "$uri$path", $rev, $rev, sub { $node_kind = $_[1]->kind(); },
+        0 );
 
-    if($node_kind != $SVN::Node::file) {
+    if ( $node_kind != $SVN::Node::file ) {
         SVN::Web::X->throw(
             error => '(path %1 is not a file in revision %2)',
-            vars  => [$path, $rev]
+            vars  => [ $path, $rev ]
         );
     }
 
-    my($fh, $fc) = (undef, '');
-    open($fh, '>', \$fc);
-    $ctx->cat($fh, $uri . $path, $rev);
+    my ( $fh, $fc ) = ( undef, '' );
+    open( $fh, '>', \$fc );
+    $ctx->cat( $fh, $uri . $path, $rev );
     close($fh);
 
     my $mime_type;
-    my $props = $ctx->propget('svn:mime-type', $uri . $path, $rev, 0);
-    if(exists $props->{$uri . $path}) {
-	$mime_type = $props->{$uri . $path};
-    } else {
-	$mime_type = 'text/plain';
+    my $props = $ctx->propget( 'svn:mime-type', $uri . $path, $rev, 0 );
+    if ( exists $props->{ $uri . $path } ) {
+        $mime_type = $props->{ $uri . $path };
+    }
+    else {
+        $mime_type = 'text/plain';
     }
 
     return {
         mimetype => $mime_type,
-        body => $fc,
+        body     => $fc,
     };
 }
 

@@ -158,16 +158,14 @@ they're the same number.
 
 =cut
 
-my %default_opts = (
-    max_diff_size => 200_000,
-);
+my %default_opts = ( max_diff_size => 200_000, );
 
 sub cache_key {
     my $self = shift;
 
-    my($rev1, $rev2) = $self->_check_params();
-    my $path         = $self->{path};
-    my $mime         = $self->{cgi}->param('mime') || 'text/html';
+    my ( $rev1, $rev2 ) = $self->_check_params();
+    my $path = $self->{path};
+    my $mime = $self->{cgi}->param('mime') || 'text/html';
 
     return "$rev1:$rev2:$mime:$path";
 }
@@ -177,47 +175,52 @@ sub run {
 
     $self->{opts} = { %default_opts, %{ $self->{opts} } };
 
-    my($rev1, $rev2) = $self->_check_params();
+    my ( $rev1, $rev2 ) = $self->_check_params();
 
     my $ctx  = $self->{repos}{client};
     my $ra   = $self->{repos}{ra};
     my $uri  = $self->{repos}{uri};
     my $path = $self->{path};
 
-    my(undef, undef, undef, $at_head) = $self->get_revs();
+    my ( undef, undef, undef, $at_head ) = $self->get_revs();
 
     my $mime = $self->{cgi}->param('mime') || 'text/html';
 
-    my %types = ( $rev1 => $ra->check_path($path, $rev1),
-		  $rev2 => $ra->check_path($path, $rev2) );
+    my %types = (
+        $rev1 => $ra->check_path( $self->rpath, $rev1 ),
+        $rev2 => $ra->check_path( $self->rpath, $rev2 )
+    );
 
-    SVN::Web::X->throw(error => '(cannot diff nodes of different types: %1 %2 %3)',
-		       vars  => [$path, $rev1, $rev2])
-	if $types{$rev1} != $types{$rev2};
+    SVN::Web::X->throw(
+        error => '(cannot diff nodes of different types: %1 %2 %3)',
+        vars  => [ $path, $rev1, $rev2 ]
+    ) if $types{$rev1} != $types{$rev2};
 
-    foreach my $rev ($rev1, $rev2) {
-	SVN::Web::X->throw(error => '(path %1 does not exist in revision %2)',
-			   vars  => [$path, $rev])
-	    if $types{$rev} == $SVN::Node::none;
+    foreach my $rev ( $rev1, $rev2 ) {
+        SVN::Web::X->throw(
+            error => '(path %1 does not exist in revision %2)',
+            vars  => [ $path, $rev ]
+        ) if $types{$rev} == $SVN::Node::none;
 
-	SVN::Web::X->throw(error => '(path %1 is a directory at rev %2)',
-			   vars  => [$path, $rev])
-	    if $types{$rev} == $SVN::Node::dir;
+        SVN::Web::X->throw(
+            error => '(path %1 is a directory at rev %2)',
+            vars  => [ $path, $rev ]
+        ) if $types{$rev} == $SVN::Node::dir;
     }
 
     my $style;
     $mime eq 'text/html'  and $style = 'Text::Diff::HTML';
     $mime eq 'text/plain' and $style = 'Unified';
 
-    my($out_h, $out_fn) = File::Temp::tempfile();
-    my($err_h, $err_fn) = File::Temp::tempfile();
+    my ( $out_h, $out_fn ) = File::Temp::tempfile();
+    my ( $err_h, $err_fn ) = File::Temp::tempfile();
 
-    $ctx->diff([], "$uri$path", $rev1, "$uri$path", $rev2,
-	       0, 1, 0, $out_h, $err_h);
+    $ctx->diff( [], "$uri$path", $rev1, "$uri$path", $rev2, 0, 1, 0, $out_h,
+        $err_h );
 
     my $out_c;
     local $/ = undef;
-    seek($out_h, 0, 0);
+    seek( $out_h, 0, 0 );
     $out_c = <$out_h>;
 
     unlink($out_fn);
@@ -228,32 +231,33 @@ sub run {
     my $diff_size     = length($out_c);
     my $max_diff_size = $self->{opts}{max_diff_size};
 
-    if($mime eq 'text/html') {
-	use SVN::Web::DiffParser;
-	my $diff;
-	my $diff_size     = length($out_c);
-	my $max_diff_size = $self->{opts}{max_diff_size} || 0;
-	if($diff_size <= $max_diff_size) {
-	    $diff = SVN::Web::DiffParser->new($out_c);
-	}
+    if ( $mime eq 'text/html' ) {
+        use SVN::Web::DiffParser;
+        my $diff;
+        my $diff_size = length($out_c);
+        my $max_diff_size = $self->{opts}{max_diff_size} || 0;
+        if ( $diff_size <= $max_diff_size ) {
+            $diff = SVN::Web::DiffParser->new($out_c);
+        }
 
-	return {
-	    template => 'diff',
-	    data     => {
-		context       => 'file',
-		rev1          => $rev1,
-		rev2          => $rev2,
-		diff          => $diff,
-		diff_size     => $diff_size,
-		max_diff_size => $max_diff_size,
-		at_head       => $at_head,
-	    }
-	};
-    } else {
-	return {
-	    mimetype => $mime,
-	    body     => $out_c,
-	}
+        return {
+            template => 'diff',
+            data     => {
+                context       => 'file',
+                rev1          => $rev1,
+                rev2          => $rev2,
+                diff          => $diff,
+                diff_size     => $diff_size,
+                max_diff_size => $max_diff_size,
+                at_head       => $at_head,
+            }
+        };
+    }
+    else {
+        return {
+            mimetype => $mime,
+            body     => $out_c,
+        };
     }
 }
 
@@ -264,7 +268,7 @@ sub _check_params {
     my $rev2 = $self->{cgi}->param('rev2');
     my @revs = $self->{cgi}->param('revs');
 
-    if(@revs) {
+    if (@revs) {
         $rev1 = min(@revs);
         $rev2 = max(@revs);
     }
@@ -272,23 +276,21 @@ sub _check_params {
     SVN::Web::X->throw(
         error => '(two revisions must be provided)',
         vars  => []
-        )
-        unless defined $rev1
-        and defined $rev2;
+      )
+      unless defined $rev1
+          and defined $rev2;
 
     SVN::Web::X->throw(
         error => '(rev1 and rev2 must be different)',
         vars  => []
-        )
-        if @revs and @revs < 2;
+    ) if @revs and @revs < 2;
 
     SVN::Web::X->throw(
         error => '(rev1 and rev2 must be different)',
         vars  => []
-        )
-        if $rev1 == $rev2;
+    ) if $rev1 == $rev2;
 
-    return($rev1, $rev2);
+    return ( $rev1, $rev2 );
 }
 
 # Make sure that a path exists in a revision
@@ -297,12 +299,12 @@ sub _check_path {
     my $path = shift;
     my $rev  = shift;
 
-    my $ra   = $self->{repos}{ra};
+    my $ra = $self->{repos}{ra};
 
-    if($ra->check_path($path, $rev) == $SVN::Node::none) {
-	SVN::Web::X->throw(
-	    error => '(path %1 does not exist in revision %2)',
-            vars  => [$path, $rev],
+    if ( $ra->check_path( $self->rpath($path), $rev ) == $SVN::Node::none ) {
+        SVN::Web::X->throw(
+            error => '(path %1 does not exist in revision %2)',
+            vars  => [ $path, $rev ],
         );
     }
 }

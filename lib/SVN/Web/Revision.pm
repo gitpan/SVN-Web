@@ -161,7 +161,7 @@ my %default_opts = (
 );
 
 sub _log {
-    my($self, $paths, $rev, $author, $date, $msg, $pool) = @_;
+    my ( $self, $paths, $rev, $author, $date, $msg, $pool ) = @_;
 
     my $data = {
         rev    => $rev,
@@ -172,11 +172,12 @@ sub _log {
 
     $data->{paths} = {
         map {
-	    $_ => { action      => $paths->{$_}->action(),
-		    copyfrom    => $paths->{$_}->copyfrom_path(),
-		    copyfromrev => $paths->{$_}->copyfrom_rev(),
-		    }
-	} keys %$paths
+            $_ => {
+                action      => $paths->{$_}->action(),
+                copyfrom    => $paths->{$_}->copyfrom_path(),
+                copyfromrev => $paths->{$_}->copyfrom_rev(),
+              }
+          } keys %$paths
     };
 
     return $data;
@@ -200,7 +201,7 @@ sub run {
     my $uri  = $self->{repos}{uri};
     my $yrev = $ra->get_latest_revnum();
 
-    my $rev  = $self->{cgi}->param('rev');
+    my $rev           = $self->{cgi}->param('rev');
     my $max_diff_size = $self->{opts}{max_diff_size};
 
     $rev = $yrev unless defined $rev;
@@ -208,49 +209,48 @@ sub run {
     SVN::Web::X->throw(
         error => '(revision %1 does not exist)',
         vars  => [$rev]
-        )
-        if $rev > $yrev;
+    ) if $rev > $yrev;
 
-    $ra->get_log(['/'], $rev, $rev, 1, 1, 1,
-        sub { $self->{REV} = $self->_log(@_) });
+    $ra->get_log( [''], $rev, $rev, 1, 1, 1,
+        sub { $self->{REV} = $self->_log(@_) } );
 
     $self->_resolve_changed_paths();
 
     my $diff;
     my $diff_size = 0;
-    if($self->{opts}{show_diff}) {
-	my($out_h, $out_fn) = File::Temp::tempfile();
-	my($err_h, $err_fn) = File::Temp::tempfile();
-	
-	$ctx->diff([], $uri, $rev - 1, $uri, $rev, 1, 1, 0, $out_h, $err_h);
+    if ( $self->{opts}{show_diff} ) {
+        my ( $out_h, $out_fn ) = File::Temp::tempfile();
+        my ( $err_h, $err_fn ) = File::Temp::tempfile();
 
-	my $out_c;
-	local $/ = undef;
-	seek($out_h, 0, 0);
-	$out_c = <$out_h>;
+        $ctx->diff( [], $uri, $rev - 1, $uri, $rev, 1, 1, 0, $out_h, $err_h );
 
-	unlink($out_fn);
-	unlink($err_fn);
-	close($out_h);
-	close($err_h);
+        my $out_c;
+        local $/ = undef;
+        seek( $out_h, 0, 0 );
+        $out_c = <$out_h>;
 
-	$diff_size = length($out_c);
-	if($diff_size <= $max_diff_size) {
-	    $diff = SVN::Web::DiffParser->new($out_c);
-	}
+        unlink($out_fn);
+        unlink($err_fn);
+        close($out_h);
+        close($err_h);
+
+        $diff_size = length($out_c);
+        if ( $diff_size <= $max_diff_size ) {
+            $diff = SVN::Web::DiffParser->new($out_c);
+        }
     }
 
     return {
-	template => 'revision',
-	data     => {
-	    context       => 'revision',
-	    rev           => $rev,
-	    youngest_rev  => $yrev,
-	    diff          => $diff,
-	    diff_size     => $diff_size,
-	    max_diff_size => $max_diff_size,
-	    %{ $self->{REV} },
-	}
+        template => 'revision',
+        data     => {
+            context       => 'revision',
+            rev           => $rev,
+            youngest_rev  => $yrev,
+            diff          => $diff,
+            diff_size     => $diff_size,
+            max_diff_size => $max_diff_size,
+            %{ $self->{REV} },
+        }
     };
 }
 
@@ -272,16 +272,17 @@ sub _resolve_changed_paths {
     my $node_kind;
 
     # Set the 'isdir' key
-    foreach my $path (keys %{ $data->{paths} }) {
-	$subpool->clear();
+    foreach my $path ( keys %{ $data->{paths} } ) {
+        $subpool->clear();
 
-	# Ignore deleted nodes
-	if($data->{paths}{$path}{action} ne 'D') {
-	    $ctx->info("$uri$path", $data->{rev}, $data->{rev},
-		       sub { $node_kind = $_[1]->kind() }, 0, $subpool);
+        # Ignore deleted nodes
+        if ( $data->{paths}{$path}{action} ne 'D' ) {
+            $ctx->info( "$uri$path", $data->{rev}, $data->{rev},
+                sub { $node_kind = $_[1]->kind() },
+                0, $subpool );
 
-	    $data->{paths}{$path}{isdir} = $node_kind == $SVN::Node::dir;
-	}
+            $data->{paths}{$path}{isdir} = $node_kind == $SVN::Node::dir;
+        }
     }
 }
 

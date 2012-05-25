@@ -13,7 +13,7 @@ package SVN::Web::Test;
 use strict;
 use warnings;
 
-our $VERSION = 0.53;
+our $VERSION = 0.60;
 
 use File::Path;
 use File::Spec;
@@ -48,19 +48,21 @@ sub new {
     my @mech_args = exists $self->{mech_args} ? $self->{mech_args} : ();
 
     $self->{_mech} =
-      exists $self->{httpd_port} ? Test::WWW::Mechanize->new(@mech_args)
-	                         : SVN::Web::Test::Mechanize->new(@mech_args);
+      exists $self->{httpd_port}
+      ? Test::WWW::Mechanize->new(@mech_args)
+      : SVN::Web::Test::Mechanize->new(@mech_args);
 
-    if(! exists $self->{root_url}) {
-	if(exists $self->{httpd_port}) {
-	    $self->{root_url} = "http://localhost:$self->{httpd_port}/svnweb";
-	} else {
-	    $self->{root_url} = "http://localhost/svnweb";
-	}
+    if ( !exists $self->{root_url} ) {
+        if ( exists $self->{httpd_port} ) {
+            $self->{root_url} = "http://localhost:$self->{httpd_port}/svnweb";
+        }
+        else {
+            $self->{root_url} = "http://localhost/svnweb";
+        }
     }
 
-    $self->{repo_path} = File::Spec->rel2abs($self->{repo_path});
-    $self->{repo_dump} = File::Spec->rel2abs($self->{repo_dump});
+    $self->{repo_path} = File::Spec->rel2abs( $self->{repo_path} );
+    $self->{repo_dump} = File::Spec->rel2abs( $self->{repo_dump} );
 
     $self->create_env();
     $self->create_install();
@@ -90,65 +92,59 @@ sub set_config {
     $fake_cgi = 1;
 
     my $config = {
-	version => $VERSION,
+        version => $VERSION,
         actions => {
-	    'browse' => {
-		'class' => 'SVN::Web::Browse',
-		'action_menu' => {
-		    'show' => [ 'directory' ],
-		    'link_text' => '(browse directory)'
-		}
-	    },
-	    'blame' => {
-		'class' => 'SVN::Web::Blame',
-		'action_menu' => {
-		    'show' => [ 'file' ],
-		    'link_text' => '(view blame)'
-		}
-	    },
-	    'checkout' => {
-		'class' => 'SVN::Web::Checkout',
-		'action_menu' => {
-		    'show' => [ 'file' ],
-		    'link_text' => '(checkout)'
-		}
-	    },
-	    'revision' => {
-		'class' => 'SVN::Web::Revision'
-	    },
-	    'view' => {
-		'class' => 'SVN::Web::View',
-		'action_menu' => {
-		    'show' => [ 'file' ],
-		    'link_text' => '(view file)'
-		}
-	    },
-	    'diff' => {
-		'class' => 'SVN::Web::Diff'
-	    },
-	    'log' => {
-		'class' => 'SVN::Web::Log',
-		'action_menu' => {
-		    'show' => [ 'file', 'directory' ],
-		    'link_text' => '(view revision log)'
-		}
-	    },
-	    'rss' => {
-		'class' => 'SVN::Web::RSS',
-		'action_menu' => {
-		    'icon' => '/css/trac/feed-icon-16x16.png',
-		    'show' => [ 'file', 'directory' ],
-		    'head_only' => '1',
-		    'link_text' => '(rss)'
-		}
-	    },
-	    'list' => {
-		'class' => 'SVN::Web::List'
-	    }
+            'browse' => {
+                'class'       => 'SVN::Web::Browse',
+                'action_menu' => {
+                    'show'      => ['directory'],
+                    'link_text' => '(browse directory)'
+                }
+            },
+            'blame' => {
+                'class'       => 'SVN::Web::Blame',
+                'action_menu' => {
+                    'show'      => ['file'],
+                    'link_text' => '(view blame)'
+                }
+            },
+            'checkout' => {
+                'class'       => 'SVN::Web::Checkout',
+                'action_menu' => {
+                    'show'      => ['file'],
+                    'link_text' => '(checkout)'
+                }
+            },
+            'revision' => { 'class' => 'SVN::Web::Revision' },
+            'view'     => {
+                'class'       => 'SVN::Web::View',
+                'action_menu' => {
+                    'show'      => ['file'],
+                    'link_text' => '(view file)'
+                }
+            },
+            'diff' => { 'class' => 'SVN::Web::Diff' },
+            'log'  => {
+                'class'       => 'SVN::Web::Log',
+                'action_menu' => {
+                    'show'      => [ 'file', 'directory' ],
+                    'link_text' => '(view revision log)'
+                }
+            },
+            'rss' => {
+                'class'       => 'SVN::Web::RSS',
+                'action_menu' => {
+                    'icon'      => '/css/trac/feed-icon-16x16.png',
+                    'show'      => [ 'file', 'directory' ],
+                    'head_only' => '1',
+                    'link_text' => '(rss)'
+                }
+            },
+            'list' => { 'class' => 'SVN::Web::List' }
         },
         cgi_class    => 'CGI',
         templatedirs => ['lib/SVN/Web/Template/trac'],
-	%{$opts->{config}},
+        %{ $opts->{config} },
     };
 
     SVN::Web::set_config($config);
@@ -164,8 +160,8 @@ sub create_env {
     plan skip_all => q{Can't find svnadmin}
       unless `svnadmin --version` =~ /version/;
 
-    rmtree([$self->{repo_path}]) if -d $self->{repo_path};
-    $ENV{SVNFSTYPE} ||= (($SVN::Core::VERSION =~ /^1\.0/) ? 'bdb' : 'fsfs');
+    rmtree( [ $self->{repo_path} ] ) if -d $self->{repo_path};
+    $ENV{SVNFSTYPE} ||= ( ( $SVN::Core::VERSION =~ /^1\.0/ ) ? 'bdb' : 'fsfs' );
 
     `svnadmin create --fs-type=$ENV{SVNFSTYPE} $self->{repo_path}`;
     `svnadmin load $self->{repo_path} < $self->{repo_dump}`;
@@ -178,12 +174,12 @@ sub create_env {
 sub create_install {
     my $self = shift;
 
-    $self->{install_dir} = tempdir(CLEANUP => 1);
+    $self->{install_dir} = tempdir( CLEANUP => 1 );
     warn "Created $self->{install_dir}\n";
     my $cwd = POSIX::getcwd();
-    chdir($self->{install_dir});
-    my $lib_dir = File::Spec->catdir($cwd, 'blib', 'lib');
-    my $svnweb_install = File::Spec->catfile($cwd, 'bin', 'svnweb-install');
+    chdir( $self->{install_dir} );
+    my $lib_dir = File::Spec->catdir( $cwd, 'blib', 'lib' );
+    my $svnweb_install = File::Spec->catfile( $cwd, 'bin', 'svnweb-install' );
 
     system "$^X -I$lib_dir $svnweb_install";
 
@@ -192,13 +188,14 @@ sub create_install {
     # This results in the directory being unreadable by SVN::Web.
     chmod 0755, $self->{install_dir};
 
-    chdir($cwd);		# Get back to the original directory
+    chdir($cwd);    # Get back to the original directory
 
     # Change the config to point to the test repo
-    my $config_file = File::Spec->catfile($self->{install_dir}, 'config.yaml');
+    my $config_file =
+      File::Spec->catfile( $self->{install_dir}, 'config.yaml' );
     my $config = YAML::LoadFile($config_file);
     $config->{repos}{repos} = $self->{repo_path};
-    YAML::DumpFile($config_file, $config);
+    YAML::DumpFile( $config_file, $config );
 
     return $self->{install_dir};
 }
@@ -211,24 +208,27 @@ sub start_server {
     my @cmd  = @_;
 
     # Make sure there's nothing else listening on our chosen port
-    my $sock = IO::Socket::INET->new(PeerAddr => 'localhost',
-				     PeerPort => $self->{httpd_port},
-				     Proto    => 'tcp');
-    if(defined $sock) {
-	close($sock);
-	die "Something else is already listening on port $self->{httpd_port}\n"
+    my $sock = IO::Socket::INET->new(
+        PeerAddr => 'localhost',
+        PeerPort => $self->{httpd_port},
+        Proto    => 'tcp'
+    );
+    if ( defined $sock ) {
+        close($sock);
+        die "Something else is already listening on port $self->{httpd_port}\n";
     }
 
     $self->{_pid} = fork();
     die "fork() failed: $!\n" unless defined $self->{_pid};
 
-    if($self->{_pid} == 0) {
-	# Set a new process group, so that this, and any children, can be
-	# killed by our parent
-	POSIX::setpgid(0, $$) or die "setpgid(): $!\n";
+    if ( $self->{_pid} == 0 ) {
 
-	exec @cmd;
-	exit;
+        # Set a new process group, so that this, and any children, can be
+        # killed by our parent
+        POSIX::setpgid( 0, $$ ) or die "setpgid(): $!\n";
+
+        exec @cmd;
+        exit;
     }
 
     # Note the original signal handlers and install our own
@@ -244,15 +244,16 @@ sub start_server {
     # for it to do so, and try and reach the root of the site.  If
     # that doesn't work, lather-rinse-repeat another five times before
     # giving up.
-    foreach my $count (1..5) {
-	sleep 1;
-	last if $self->{_mech}->get($self->{root_url})->code() == 200;
-	
-	if($count == 5) {
-	    kill 15, -$self->{_pid};
-	    die "Could not get 200 response from server on port $self->{httpd_port}\n"
-	      if $count == 5;
-	}
+    foreach my $count ( 1 .. 5 ) {
+        sleep 1;
+        last if $self->{_mech}->get( $self->{root_url} )->code() == 200;
+
+        if ( $count == 5 ) {
+            kill 15, -$self->{_pid};
+            die
+"Could not get 200 response from server on port $self->{httpd_port}\n"
+              if $count == 5;
+        }
     }
 
     return $self->{_pid};
@@ -262,9 +263,9 @@ sub _sig {
     my $self = shift;
     my $sig  = shift;
 
-    if(exists $self->{_pid}) {
-	diag "Caught signal $sig, stopping server (pid: $self->{_pid})";
-	$self->stop_server();
+    if ( exists $self->{_pid} ) {
+        diag "Caught signal $sig, stopping server (pid: $self->{_pid})";
+        $self->stop_server();
     }
 
     # Call the original signal handler
@@ -291,21 +292,21 @@ sub walk_site {
     $test->($self);
 
     my @links = $self->mech()->links();
-    for my $i (0 .. $#links) {
+    for my $i ( 0 .. $#links ) {
         my $link_url = $links[$i]->url_abs;
 
-	diag sprintf "Fetching %d/%d %s (%s)",
-	    $i + 1, $#links + 1, $link_url, $links[$i]->text()
-		if exists $ENV{TEST_VERBOSE} and $ENV{TEST_VERBOSE};
+        diag sprintf "Fetching %d/%d %s (%s)",
+          $i + 1, $#links + 1, $link_url, $links[$i]->text()
+          if exists $ENV{TEST_VERBOSE} and $ENV{TEST_VERBOSE};
 
         next if $seen->{$link_url};
-	diag "Skipping $link_url", next
-	    if $link_url !~ /(?:localhost|127\.0\.0\.1)/;
+        diag "Skipping $link_url", next
+          if $link_url !~ /(?:localhost|127\.0\.0\.1)/;
 
         ++$seen->{$link_url};
 
         $self->mech()->get($link_url);
-        $self->walk_site($test, $seen);
+        $self->walk_site( $test, $seen );
         $self->mech()->back;
     }
 }
@@ -315,12 +316,12 @@ package SVN::Web::Test::Mechanize;
 use base qw(Test::WWW::Mechanize);
 
 sub send_request {
-    my($self, $request) = @_;
+    my ( $self, $request ) = @_;
 
     my $buf = '';
     my $uri = $request->uri;
 
-    my($proto, $hostname) = $uri_base =~ m{(https?)://([^/]+)};
+    my ( $proto, $hostname ) = $uri_base =~ m{(https?)://([^/]+)};
     my $port = $proto eq 'http' ? 80 : 443;
 
     {
@@ -337,11 +338,11 @@ sub send_request {
     }
 
     my $response = HTTP::Response->new(200);
-    my $msg = HTTP::Message->parse($buf);
-    $response->header(%{ $msg->headers() });
-    $response->content($msg->content());
+    my $msg      = HTTP::Message->parse($buf);
+    $response->header( %{ $msg->headers() } );
+    $response->content( $msg->content() );
     $response->request($request);
-    $response->header("Client-Date" => HTTP::Date::time2str(time));
+    $response->header( "Client-Date" => HTTP::Date::time2str(time) );
 
     return $response;
 }

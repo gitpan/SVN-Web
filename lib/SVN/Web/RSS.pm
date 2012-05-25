@@ -1,9 +1,11 @@
 package SVN::Web::RSS;
-@ISA = qw(SVN::Web::Log);
 use strict;
+use warnings;
+
+my @ISA = qw(SVN::Web::Log);
 use SVN::Web::Log;
 
-our $VERSION = 0.53;
+our $VERSION = 0.54;
 
 =head1 NAME
 
@@ -66,7 +68,7 @@ See L<SVN::Web::Log>.
 
 =cut
 
-my %default_opts = (publisher => '');
+my %default_opts = ( publisher => '' );
 
 # <dc:date> elements have a specific format that we must use, overriding
 # the user's choice
@@ -76,7 +78,7 @@ sub format_svn_timestamp {
 
     my $time = SVN::Core::time_from_cstring($cstring) / 1_000_000;
 
-    return POSIX::strftime('%Y-%m-%dT%H:%M:%S', gmtime($time));
+    return POSIX::strftime( '%Y-%m-%dT%H:%M:%S', gmtime($time) );
 }
 
 sub run {
@@ -88,10 +90,8 @@ sub run {
 
     return {
         template => 'rss',
-	mimetype => 'text/xml',
-        data     => { %{$data},
-		      publisher => $self->{opts}{publisher},
-		    }
+        mimetype => 'text/xml',
+        data     => { %{$data}, publisher => $self->{opts}{publisher}, }
     };
 }
 
@@ -102,6 +102,8 @@ sub run {
 Copyright 2003-2004 by Chia-liang Kao C<< <clkao@clkao.org> >>.
 
 Copyright 2005-2007 by Nik Clayton C<< <nik@FreeBSD.org> >>.
+
+Copyright 2012 by Dean Hamstead C<< <dean@fragfest.com.au> >>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -136,7 +136,7 @@ sub cache_key {
     my $self = shift;
     my $path = $self->{path};
 
-    my(undef, undef, $act_rev, $at_head) = $self->get_revs();
+    my ( undef, undef, $act_rev, $at_head ) = $self->get_revs();
 
     return "$act_rev:$at_head:$path";
 }
@@ -147,80 +147,84 @@ sub run {
     my $ra   = $self->{repos}{ra};
     my $path = $self->{path};
 
-    my $uri  = $path eq '/' ? $self->{repos}{uri}
-                            : $self->{repos}{uri} . $path;
+    my $uri =
+        $path eq '/'
+      ? $self->{repos}{uri}
+      : $self->{repos}{uri} . $path;
 
-    my($exp_rev, $yng_rev, $act_rev, $at_head) = $self->get_revs();
+    my ( $exp_rev, $yng_rev, $act_rev, $at_head ) = $self->get_revs();
 
-    my $rev  = $act_rev;
+    my $rev = $act_rev;
 
     my $node_kind;
-    $ctx->info($uri, $rev, $rev,
-	       sub { $node_kind = $_[1]->kind(); }, 0);
+    $ctx->info( $uri, $rev, $rev, sub { $node_kind = $_[1]->kind(); }, 0 );
 
-    if($node_kind == $SVN::Node::none) {
+    if ( $node_kind == $SVN::Node::none ) {
         SVN::Web::X->throw(
             error => '(path %1 does not exist in revision %2)',
-            vars  => [$path, $rev]
+            vars  => [ $path, $rev ]
         );
     }
 
-    if($node_kind != $SVN::Node::dir) {
-	SVN::Web::X->throw(
-	    error => '(path %1 is not a directory in revision %2)',
-	    vars  => [$path, $rev],
-	);
+    if ( $node_kind != $SVN::Node::dir ) {
+        SVN::Web::X->throw(
+            error => '(path %1 is not a directory in revision %2)',
+            vars  => [ $path, $rev ],
+        );
     }
 
-    my $dirents = $ctx->ls($uri, $rev, 0);
+    my $dirents = $ctx->ls( $uri, $rev, 0 );
 
     my $entries = [];
-    my($name, $dirent);
+    my ( $name, $dirent );
     my $current_time = time();
 
-    while(($name, $dirent) = each %{ $dirents }) {
-	my $kind = $dirent->kind();
-	my $entry_path = $path eq '/' ? "$path$name"
-	                              : "$path/$name";
+    while ( ( $name, $dirent ) = each %{$dirents} ) {
+        my $kind = $dirent->kind();
+        my $entry_path = 
+          $path eq '/'
+          ? "$path$name"
+          : "$path/$name";
 
-	my @log_result = $self->recent_interesting_rev($entry_path, $rev);
-	
-	push @{ $entries }, {
-	    name      => $name,
-	    rev       => $log_result[1],
-	    kind      => $kind,
-	    isdir     => ($kind == $SVN::Node::dir),
-	    size      => ($kind == $SVN::Node::dir ? '' : $dirent->size()),
-	    author    => $dirent->last_author(),
-	    has_props => $dirent->has_props(),
-	    time      => $dirent->time() / 1_000_000,
-            age       => $current_time - ($dirent->time() / 1_000_000),
-	    msg       => $log_result[4],
-	  };
+        my @log_result = $self->recent_interesting_rev( $entry_path, $rev );
+
+        push @{$entries},
+          {
+            name      => $name,
+            rev       => $log_result[1],
+            kind      => $kind,
+            isdir     => ( $kind == $SVN::Node::dir ),
+            size      => ( $kind == $SVN::Node::dir ? '' : $dirent->size() ),
+            author    => $dirent->last_author(),
+            has_props => $dirent->has_props(),
+            time      => $dirent->time() / 1_000_000,
+            age => $current_time - ( $dirent->time() / 1_000_000 ),
+            msg => $log_result[4],
+          };
     }
 
     # TODO: custom sorting
-    @$entries
-        = sort { ($b->{isdir} <=> $a->{isdir}) || ($a->{name} cmp $b->{name}) }
-        @$entries;
+    @$entries =
+      sort { ( $b->{isdir} <=> $a->{isdir} ) || ( $a->{name} cmp $b->{name} ) }
+      @$entries;
 
     my @props = ();
     foreach my $prop_name (qw(svn:externals)) {
-	my $prop_value = ($ctx->revprop_get($prop_name, $uri, $rev))[0];
-	if(defined $prop_value) {
-	    $prop_value =~ s/\s*\n$//ms;
-	    push @props, { name => $prop_name, value => $prop_value };
-	}
+        my $prop_value = ( $ctx->revprop_get( $prop_name, $uri, $rev ) )[0];
+        if ( defined $prop_value ) {
+            $prop_value =~ s/\s*\n$//ms;
+            push @props, { name => $prop_name, value => $prop_value };
+        }
     }
 
     return {
         template => 'browse',
         data     => {
-	    context      => 'directory',
+            context      => 'directory',
             entries      => $entries,
             rev          => $act_rev,
             youngest_rev => $yng_rev,
-	    at_head      => $at_head,
+            at_head      => $at_head,
             props        => \@props,
         }
     };
