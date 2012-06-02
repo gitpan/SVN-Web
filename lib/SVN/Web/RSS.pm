@@ -2,8 +2,7 @@ package SVN::Web::RSS;
 use strict;
 use warnings;
 
-my @ISA = qw(SVN::Web::Log);
-use SVN::Web::Log;
+use base 'SVN::Web::Log';
 
 our $VERSION = 0.54;
 

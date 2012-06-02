@@ -407,8 +407,7 @@ sub run_psgi {
         $html = run($cfg);
     };
 
-    my $e;
-    if ( $e = SVN::Web::X->caught() ) {
+    if ( my $e = SVN::Web::X->caught() ) {
         $html->{template} = 'x';
         $html->{data}{error_msg} =
           SVN::Web::I18N::loc( $e->error(), @{ $e->vars() } );

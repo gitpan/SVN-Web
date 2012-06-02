@@ -7,12 +7,10 @@ build_requires:
   File::Copy: 0
   File::Find: 0
   File::Path: 0
-  IO::Socket::INET: 0
-  Module::Build: 0.3601
   Test::More: 0
   Test::WWW::Mechanize: 0
 configure_requires:
-  Module::Build: 0.3601
+  ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
 generated_by: 'Dist::Zilla version 4.300016, CPAN::Meta::Converter version 2.120921'
 license: perl
@@ -22,6 +20,8 @@ meta-spec:
 name: SVN-Web
 recommends:
   Cache::Cache: 0
+  Template::Plugin::Clickable: 0
+  Template::Plugin::Clickable::Email: 0
   Template::Plugin::Subst: 0
   Test::Benchmark: 0
   Test::HTML::Tidy: 0
@@ -42,6 +42,9 @@ requires:
   Number::Format: 0
   POSIX: 0
   Plack: 0
+  SVN::Client: 0
+  SVN::Core: 0
+  SVN::Ra: 0
   Template: 0
   Template::Plugin::Number::Format: 0
   Time::Zone: 0
@@ -52,4 +55,4 @@ requires:
   strict: 0
   vars: 0
   warnings: 0
-version: 0.60_3
+version: 0.60_5

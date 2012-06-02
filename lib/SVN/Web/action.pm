@@ -96,10 +96,8 @@ L<OVERVIEW>, this would lead to:
 
 =item $self->{cgi}
 
-An instance of a CGI object corresponding to the current request.  This is
-normally an object from either the L<CGI> or L<CGI::Fast> modules, although
-it is possible to specify another class with the C<cgi_class> directive in
-F<config.yaml>.
+An instance of a CGI compatible object corresponding to the current request.  This is normally an object from either the L<CGI> or L<CGI::Fast> modules, although it is possible to specify another class with the C<cgi_class> directive in
+F<config.yaml>. Since we now use Plack, this is a L<Plack::Request> object.
 
 You can use this object to retrieve the values of any parameters passed to
 your action.
@@ -298,7 +296,7 @@ sub get_revs {
       : $self->recent_interesting_rev( $path, $yng_rev );
 
     my $at_head = 0;
-    if ( !defined $exp_rev ) {
+    if ( !defined $exp_rev or $exp_rev eq '' ) {
         $at_head = 1;
     }
     else {

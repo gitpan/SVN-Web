@@ -5,7 +5,6 @@ SVN::Web::Test - automated web testing for SVN::Web
 
 =head1 DESCRIPTION
 
-
 =cut
 
 package SVN::Web::Test;
@@ -19,21 +18,11 @@ use File::Path;
 use File::Spec;
 use File::Temp qw(tempdir);
 use POSIX ();
-use IO::Socket::INET;
 
 use Test::More;
-use Test::WWW::Mechanize;
 
 use SVN::Web;
 use YAML ();
-
-# CGI.pm does not reinitialise itself from the environment when multiple
-# objects are created.  This is a problem when testing, as the tests pass
-# in different QUERY_STRING variables.  C<< use CGI >> and increment
-# $CGI::PERLEX, which is an internal CGI.pm flag that turns off this
-# behaviour.
-use CGI;
-$CGI::PERLEX++;
 
 my $uri_base;
 my $script;
@@ -48,9 +37,7 @@ sub new {
     my @mech_args = exists $self->{mech_args} ? $self->{mech_args} : ();
 
     $self->{_mech} =
-      exists $self->{httpd_port}
-      ? Test::WWW::Mechanize->new(@mech_args)
-      : SVN::Web::Test::Mechanize->new(@mech_args);
+      SVN::Web::Test::Mechanize->new(@mech_args);
 
     if ( !exists $self->{root_url} ) {
         if ( exists $self->{httpd_port} ) {
@@ -131,7 +118,7 @@ sub set_config {
                     'link_text' => '(view revision log)'
                 }
             },
-            'rss' => {
+           'rss' => {
                 'class'       => 'SVN::Web::RSS',
                 'action_menu' => {
                     'icon'      => '/css/trac/feed-icon-16x16.png',
@@ -142,8 +129,8 @@ sub set_config {
             },
             'list' => { 'class' => 'SVN::Web::List' }
         },
-        cgi_class    => 'CGI',
-        templatedirs => ['lib/SVN/Web/Template/trac'],
+        cgi_class    => 'Plack::Request',
+        templatedirs => ['template/trac'],
         %{ $opts->{config} },
     };
 
@@ -152,19 +139,21 @@ sub set_config {
 
 # Create a Subversion repo from a dump file.
 sub create_env {
+
     my $self = shift;
 
     plan skip_all => 'Test::WWW::Mechanize not installed'
       unless eval { require Test::WWW::Mechanize; 1; };
 
     plan skip_all => q{Can't find svnadmin}
-      unless `svnadmin --version` =~ /version/;
+      unless `svnadmin --version` =~ m/version/;
 
     rmtree( [ $self->{repo_path} ] ) if -d $self->{repo_path};
-    $ENV{SVNFSTYPE} ||= ( ( $SVN::Core::VERSION =~ /^1\.0/ ) ? 'bdb' : 'fsfs' );
+    $ENV{SVNFSTYPE} ||= ( ( $SVN::Core::VERSION =~ m/^1\.0/ ) ? 'bdb' : 'fsfs' );
 
     `svnadmin create --fs-type=$ENV{SVNFSTYPE} $self->{repo_path}`;
     `svnadmin load $self->{repo_path} < $self->{repo_dump}`;
+
 }
 
 # Create a scratch area, run svnweb-install.  The generated config.yaml
@@ -172,6 +161,7 @@ sub create_env {
 #
 # Returns the directory in which the scratch area is rooted.
 sub create_install {
+
     my $self = shift;
 
     $self->{install_dir} = tempdir( CLEANUP => 1 );
@@ -200,89 +190,6 @@ sub create_install {
     return $self->{install_dir};
 }
 
-# Forks and execs the process that will act as the web server.
-# Arguments are passed, unchanged, to exec().  Returns the PID of
-# the child process
-sub start_server {
-    my $self = shift;
-    my @cmd  = @_;
-
-    # Make sure there's nothing else listening on our chosen port
-    my $sock = IO::Socket::INET->new(
-        PeerAddr => 'localhost',
-        PeerPort => $self->{httpd_port},
-        Proto    => 'tcp'
-    );
-    if ( defined $sock ) {
-        close($sock);
-        die "Something else is already listening on port $self->{httpd_port}\n";
-    }
-
-    $self->{_pid} = fork();
-    die "fork() failed: $!\n" unless defined $self->{_pid};
-
-    if ( $self->{_pid} == 0 ) {
-
-        # Set a new process group, so that this, and any children, can be
-        # killed by our parent
-        POSIX::setpgid( 0, $$ ) or die "setpgid(): $!\n";
-
-        exec @cmd;
-        exit;
-    }
-
-    # Note the original signal handlers and install our own
-    $self->{_sigintr} = $SIG{INT};
-    $self->{_sigquit} = $SIG{QUIT};
-    $self->{_siggerm} = $SIG{TERM};
-
-    $SIG{INT}  = sub { $self->_sig(@_) };
-    $SIG{QUIT} = sub { $self->_sig(@_) };
-    $SIG{TERM} = sub { $self->_sig(@_) };
-
-    # The child may take a few seconds to start up.  So wait a second
-    # for it to do so, and try and reach the root of the site.  If
-    # that doesn't work, lather-rinse-repeat another five times before
-    # giving up.
-    foreach my $count ( 1 .. 5 ) {
-        sleep 1;
-        last if $self->{_mech}->get( $self->{root_url} )->code() == 200;
-
-        if ( $count == 5 ) {
-            kill 15, -$self->{_pid};
-            die
-"Could not get 200 response from server on port $self->{httpd_port}\n"
-              if $count == 5;
-        }
-    }
-
-    return $self->{_pid};
-}
-
-sub _sig {
-    my $self = shift;
-    my $sig  = shift;
-
-    if ( exists $self->{_pid} ) {
-        diag "Caught signal $sig, stopping server (pid: $self->{_pid})";
-        $self->stop_server();
-    }
-
-    # Call the original signal handler
-    return $self->{_sigintr} if $sig eq 'INT'  and exists $self->{_sigintr};
-    return $self->{_sigquit} if $sig eq 'QUIT' and exists $self->{_sigquit};
-    return $self->{_sigterm} if $sig eq 'TERM' and exists $self->{_sigterm};
-
-    return;
-}
-
-sub stop_server {
-    my $self = shift;
-    kill 9, -$self->{_pid};
-    wait;
-    delete $self->{_pid};
-}
-
 # Walk the site
 sub walk_site {
     my $self = shift;
@@ -301,7 +208,7 @@ sub walk_site {
 
         next if $seen->{$link_url};
         diag "Skipping $link_url", next
-          if $link_url !~ /(?:localhost|127\.0\.0\.1)/;
+          if $link_url !~ m/(?:localhost|127\.0\.0\.1)/;
 
         ++$seen->{$link_url};
 
@@ -315,34 +222,29 @@ package SVN::Web::Test::Mechanize;
 
 use base qw(Test::WWW::Mechanize);
 
+use Plack::Test;
+use SVN::Web;
+use Plack::Builder;
+
 sub send_request {
     my ( $self, $request ) = @_;
 
     my $buf = '';
     my $uri = $request->uri;
+    my $response;
 
-    my ( $proto, $hostname ) = $uri_base =~ m{(https?)://([^/]+)};
-    my $port = $proto eq 'http' ? 80 : 443;
+    my $app = builder {
+                mount "/svnweb" => sub { SVN::Web->run_psgi(@_) },
+            };
 
-    {
-        open my $outfh, '>', \$buf;
-        local *STDOUT = $outfh;
-        $uri =~ s/^$uri_base$script//;
-        $uri =~ s/\?(.*?)(?:#.*)?$//g;
-        local $ENV{QUERY_STRING}   = $1 || '';
-        local $ENV{PATH_INFO}      = $uri;
-        local $ENV{SCRIPT_NAME}    = "$uri_base$script";
-        local $ENV{HTTP_HOST}      = "$hostname:$port";
-        local $ENV{REQUEST_METHOD} = 'GET';
-        SVN::Web::run_cgi();
-    }
-
-    my $response = HTTP::Response->new(200);
-    my $msg      = HTTP::Message->parse($buf);
-    $response->header( %{ $msg->headers() } );
-    $response->content( $msg->content() );
-    $response->request($request);
-    $response->header( "Client-Date" => HTTP::Date::time2str(time) );
+    test_psgi
+        app => $app,
+        client => sub {
+            my $cb = shift;
+            my $req = HTTP::Request->new(GET => $uri);
+            $response = $cb->($req);
+        }
+    ;
 
     return $response;
 }
@@ -351,11 +253,17 @@ sub send_request {
 
 Chia-liang Kao E<lt>clkao@clkao.orgE<gt> and E<lt>nik@cpan.org<gt>.
 
+Dean Hamstead E<lt>dean@fragfest.com.auE<gt>
+
 =head1 COPYRIGHT
+
+Copyright (c) 2012 by Dean Hamstead E<lt>dean@fragfest.com.auE<gt>
 
 Copyright (c) 2005-2007 by Nik Clayton E<lt>nik@cpan.org<gt>.
 
 Copyright (c) 2004 by Chia-liang Kao E<lt>clkao@clkao.orgE<gt>.
+
+=head1 LICENSE
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
