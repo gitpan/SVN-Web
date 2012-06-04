@@ -36,7 +36,6 @@
             "XML::RSS::Parser" : "0"
          },
          "requires" : {
-            "Alien::SVN" : "0",
             "Carp" : "0",
             "Exception::Class" : "1.22",
             "File::Basename" : "0",
@@ -76,6 +75,6 @@
       }
    },
    "release_status" : "testing",
-   "version" : "0.60_5"
+   "version" : "0.60_6"
 }
 

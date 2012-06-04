@@ -29,7 +29,6 @@ my %WriteMakefileArgs = (
   "LICENSE" => "perl",
   "NAME" => "SVN::Web",
   "PREREQ_PM" => {
-    "Alien::SVN" => 0,
     "Carp" => 0,
     "Exception::Class" => "1.22",
     "File::Basename" => 0,
@@ -57,7 +56,7 @@ my %WriteMakefileArgs = (
     "vars" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.60_5",
+  "VERSION" => "0.60_6",
   "test" => {
     "TESTS" => "t/*.t"
   }

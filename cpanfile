@@ -1,4 +1,3 @@
-requires "Alien::SVN" => "0";
 requires "Carp" => "0";
 requires "Exception::Class" => "1.22";
 requires "File::Basename" => "0";

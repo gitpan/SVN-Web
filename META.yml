@@ -27,7 +27,6 @@ recommends:
   Test::HTML::Tidy: 0
   XML::RSS::Parser: 0
 requires:
-  Alien::SVN: 0
   Carp: 0
   Exception::Class: 1.22
   File::Basename: 0
@@ -55,4 +54,4 @@ requires:
   strict: 0
   vars: 0
   warnings: 0
-version: 0.60_5
+version: 0.60_6
