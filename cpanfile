@@ -1,3 +1,4 @@
+requires "Alien::SVN" => "0";
 requires "Carp" => "0";
 requires "Exception::Class" => "1.22";
 requires "File::Basename" => "0";
@@ -12,9 +13,6 @@ requires "Locale::Maketext::Lexicon" => "0";
 requires "Number::Format" => "0";
 requires "POSIX" => "0";
 requires "Plack" => "0";
-requires "SVN::Client" => "0";
-requires "SVN::Core" => "0";
-requires "SVN::Ra" => "0";
 requires "Template" => "0";
 requires "Template::Plugin::Number::Format" => "0";
 requires "Time::Zone" => "0";

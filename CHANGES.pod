@@ -12,7 +12,7 @@ This is a list of the main changes between different versions of
 SVN::Web.  Please see L<UPDATING.pod> for details about any changes
 you may need to make when updating an SVN::Web installation.
 
-=head2 0.60, pending release
+=head2 0.60, released Jun 7, 2012
 
 =over
 
@@ -20,7 +20,11 @@ you may need to make when updating an SVN::Web installation.
 
 Pulled out mod_perl1/2 and cgi, replaced with Plack. This probably broke lots of things.
 
-=item 
+=item
+
+DAGOLDEN recommends using Alien::SVN as dependency, rather than SVN::Core, SVN::Client and SVN::Ra. This is because the SVN perl modules are not published to CPAN.
+
+=item
 
 Merged patch from rt26159
 
@@ -75,7 +79,7 @@ Belatedly update the SVN::Web installation to note that Subversion
 =item
 
 C<reposparent> functionality was inadvertently broken in 0.50.  This
-release fixes that.  This was rt#24377 reported by Christoph Buescher 
+release fixes that.  This was rt#24377 reported by Christoph Buescher
 <Christoph.Buescher@fiducia.de>.
 
 =back
@@ -377,8 +381,8 @@ months, years} since the file was last modified.
 
 =item
 
-The C<revision>, C<log>, C<view>, and C<rss> actions are much more 
-conservative with memory when processing commits that changed a large 
+The C<revision>, C<log>, C<view>, and C<rss> actions are much more
+conservative with memory when processing commits that changed a large
 number of files.  Fixes rt#17359, reported by Dietrich Streifert
 <dietrich.streifert@visionet.de>.
 
@@ -397,7 +401,7 @@ the raw HTML.  Reported by Dominic Mitchell <dom@happygiraffe.net>.
 =item
 
 Entering a revision number that does not exist will now generate a
-localised error message.  Fixes rt#17822, reported by 
+localised error message.  Fixes rt#17822, reported by
 <gk5885@kickstyle.net>
 
 =item
@@ -539,13 +543,13 @@ the most recent log message.
 
 =item
 
-More customisation options, making it easier to add or remove actions 
+More customisation options, making it easier to add or remove actions
 from the list of things that SVN::Web is allowed to do.
 
 =item
 
-Added huge swathes of information to the documentation.  It should now 
-be much easier for anyone else to contribute code and/or templates to 
+Added huge swathes of information to the documentation.  It should now
+be much easier for anyone else to contribute code and/or templates to
 SVN::Web.
 
 =item
@@ -554,18 +558,18 @@ A fix for rt#12431.  URLs without trailing slashes are fixed.
 
 =item
 
-A mechanism to 'stack' Template Toolkit filters. You can easily run 
-log messages through an arbitrary number of filters, without causing 
+A mechanism to 'stack' Template Toolkit filters. You can easily run
+log messages through an arbitrary number of filters, without causing
 problems if one or more of the filters is not installed.
 
 =item
 
-Inline display of some content from the repository where appropriate 
+Inline display of some content from the repository where appropriate
 (e.g., viewing an image works properly).
 
 =item
 
-Fixed a bug that meant the results from the automated tests weren't 
+Fixed a bug that meant the results from the automated tests weren't
 valid. Fixed the bugs that this uncovered.
 
 =item
@@ -662,7 +666,7 @@ Sort the entries in browsing.
 
 Adjust pool usage for opened repos so it's easier for modperl to work
 
-=item 
+=item
 
 Add mod_perl support.
 

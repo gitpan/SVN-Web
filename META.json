@@ -4,7 +4,7 @@
       "Dean Hamstead <dean@fragfest.com.au>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300016, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300017, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -36,6 +36,7 @@
             "XML::RSS::Parser" : "0"
          },
          "requires" : {
+            "Alien::SVN" : "0",
             "Carp" : "0",
             "Exception::Class" : "1.22",
             "File::Basename" : "0",
@@ -50,9 +51,6 @@
             "Number::Format" : "0",
             "POSIX" : "0",
             "Plack" : "0",
-            "SVN::Client" : "0",
-            "SVN::Core" : "0",
-            "SVN::Ra" : "0",
             "Template" : "0",
             "Template::Plugin::Number::Format" : "0",
             "Time::Zone" : "0",
@@ -74,7 +72,7 @@
          }
       }
    },
-   "release_status" : "testing",
-   "version" : "0.60_6"
+   "release_status" : "stable",
+   "version" : "0.60"
 }
 
