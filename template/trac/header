@@ -20,7 +20,7 @@
     [% IF c.action.match('^(?:browse|log|view)$') AND at_head %]
       <link rel="alternate" type="application/rss+xml"
         title="RSS Feed for [% c.path %]"
-        href="[% c.script %]/[% c.repos %]/rss[% c.path %]" />
+        href="[% c.script %]/[% c.repos | uri %]/rss[% c.path | url %]" />
     [% END %]
   </head>
   <body>

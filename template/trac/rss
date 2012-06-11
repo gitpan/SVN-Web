@@ -11,9 +11,9 @@
  xmlns:admin="http://webns.net/mvcb/"
 >
 
-<channel rdf:about="[% c.script %]/[% c.repos %]/log[% c.path %]">
-  <title>[%|l%](revision log)[%END%] - [% c.path %]</title>
-  <link>[% c.script %]/[% c.repos %]/log[% c.path %]</link>
+<channel rdf:about="[% c.script %]/[% c.repos | uri %]/log[% c.path | url %]">
+  <title>[%|l%](revision log)[%END%] - [% c.path | uri %]</title>
+  <link>[% c.script %]/[% c.repos | uri %]/log[% c.path | url %]</link>
   <description></description>
   <dc:date>[% revs.0.date %]</dc:date>
   [% IF publisher != '' %]<dc:publisher>[% publisher %]</dc:publisher>[% END %]
@@ -24,14 +24,14 @@
   <items>
     <rdf:Seq>
     [%- FOREACH revs %]
-      <rdf:li rdf:resource="[% c.script %]/[% c.repos %]/revision?rev=[% rev %]" />
+      <rdf:li rdf:resource="[% c.script %]/[% c.repos | uri %]/revision?rev=[% rev %]" />
     [%- END %]
     </rdf:Seq>
   </items>
 </channel>
 
 [% FOREACH revs %]
-<item rdf:about="[% c.script %]/[% c.repos %]/revision?rev=[% rev %]">
+<item rdf:about="[% c.script %]/[% c.repos | uri %]/revision?rev=[% rev %]">
   <title>[% rev %] - [% msg | truncate(80) | html %]</title>
   <link>[% c.script %]/[% c.repos %]/revision?rev=[% rev %]</link>
   <description><![CDATA[[% log_msg(msg) %]]]></description>

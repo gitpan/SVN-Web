@@ -41,7 +41,7 @@
        %]
       <tr>
         <td>[% line.line_no + 1 %]</td>
-        <td class="chgset">[% IF ! same_rev %]<a href="[% c.script %]/[% c.repos %]/revision/?rev=[% line.rev %]">[% line.rev %]</a>[% END %]</td>
+        <td class="chgset">[% IF ! same_rev %]<a href="[% c.script %]/[% c.repos | uri %]/revision/?rev=[% line.rev %]">[% line.rev %]</a>[% END %]</td>
 
         <td class="author" align="center">[% line.author UNLESS same_rev %]</td>
         <td style="white-space: pre; background: [% colors.$color_idx %];">[% line.line | html %]</td>
@@ -50,9 +50,9 @@
     </tbody>
   </table>
   [% ELSIF mimetype.match('^image/') %]
-    <img src="[% c.script %]/[% c.repos %]/checkout[% c.path %]" />
+    <img src="[% c.script %]/[% c.repos | uri %]/checkout[% c.path | url %]" />
   [% ELSE %]
-<p>This file can not be displayed in the browser.  You can <a href="[% c.script %]/[% c.repos %]/checkout[% c.path %]">download it</a>.</p>
+<p>This file can not be displayed in the browser.  You can <a href="[% c.script %]/[% c.repos | uri %]/checkout[% c.path | url %]">download it</a>.</p>
   [% END %]
 </div>
 [% PROCESS footer %]

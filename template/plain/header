@@ -10,11 +10,11 @@
 [% UNLESS nonav %]
 <div id="links">
 <div id="navpath">
-<a href="[% script %]">[%|l%]Repository list[%END%]</a> |
+<a href="[% script | url %]">[%|l%]Repository list[%END%]</a> |
   [% url = [script,repos,''] %]
   [% url = url.join('/') %]
   [% urlpath = ['',''] %]
-<a href="[% url %]">[[% repos %]]</a>
+<a href="[% url | url %]">[[% repos %]]</a>
   [% FOREACH p = navpaths %]
     [% CALL urlpath.splice(-1, 0, p) %]
     [% IF loop.count == loop.size %]
@@ -22,7 +22,7 @@
 /   [% p %]
       [% END %]
     [% ELSE %]
-/    <a href="[% url %]browse[% urlpath.join('/') %][% IF rev %]?rev=[% rev %][% END %]">[% p %]</a>
+/    <a href="[% url | url %]browse[% urlpath.join('/') | url %][% IF rev %]?rev=[% rev %][% END %]">[% p %]</a>
     [% END %]
   [% END %]
 </div>

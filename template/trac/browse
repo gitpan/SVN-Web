@@ -30,12 +30,12 @@
     <tr class="[% loop.count % 2 ? "even" : "odd" %]">
       <td class="name">
       [% IF isdir %]
-        <a class="dir" href="[% c.script %]/[% c.repos %]/browse[% c.path %]/[% name | uri | html%][% revstr %]">[% name %]</a>
+        <a class="dir" href="[% c.script %]/[% c.repos | uri %]/browse[% c.path | url %]/[% name | uri | html %][% revstr %]">[% name %]</a>
       [% ELSE %]
-        <a class="file" href="[% c.script %]/[% c.repos %]/view[% c.path %]/[% name | uri | html %][% revstr %]">[% name %]</a>
+        <a class="file" href="[% c.script %]/[% c.repos | uri %]/view[% c.path | url %]/[% name | uri | html %][% revstr %]">[% name %]</a>
       [% END %]
       </td>
-      <td class="rev"><a href="[% c.script %]/[% c.repos %]/revision?rev=[% rev %]">[% rev %]</a></td>
+      <td class="rev"><a href="[% c.script %]/[% c.repos | uri %]/revision?rev=[% rev %]">[% rev %]</a></td>
       <td class="size">[% IF ! isdir; size | format_bytes; END %]</td>
 [% quanta = { '60'         => 'second',
               '3600'       => 'minute',

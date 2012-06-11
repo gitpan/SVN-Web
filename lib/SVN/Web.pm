@@ -25,7 +25,7 @@ SVN::Web::I18N::add_directory(
     File::Spec->catdir( substr( __FILE__, 0, -3 ), 'I18N' ) );
 SVN::Web::I18N::loc_lang('en');
 
-our $VERSION = 0.60;
+our $VERSION = 0.61;
 
 my $template;
 my $config;
@@ -145,10 +145,13 @@ sub get_repos {
     # warn "REPO_URI: $repo_uri";
 
     eval {
+	my $client = SVN::Client->new( pool => $repospool );
+	my $auth = $client->auth;
         $REPOS{$repos}{uri} ||= $repo_uri;
         $REPOS{$repos}{ra}  ||= SVN::Ra->new(
             url  => $repo_uri,
-            pool => $repospool
+            pool => $repospool,
+	    auth => $auth,
         );
     };
 

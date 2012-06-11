@@ -4,7 +4,7 @@
 [% PROCESS _log_msg %]
 
 [% class_with_action = { 'A' => 'add',
-                         'M' => 'mod', 
+                         'M' => 'mod',
                          'D' => 'rem',
                          } %]
 
@@ -12,9 +12,9 @@
   <h2>[%|l%](revision navigation)[%END%]</h2>
 
   <ul>
-    <li class="first">[% IF rev > 1 %]<a href="[% c.script %]/[% c.repos %]/revision/?rev=[% rev - 1 %]">[%|l%](previous revision)[%END%]</a>[% ELSE %][%|l%](previous revision)[%END%][% END %]</li>
-    <li>[% IF rev != youngest_rev %]<a href="[% c.script %]/[% c.repos %]/revision/?rev=[% rev + 1 %]">[%|l%](next revision)[%END%]</a>[% ELSE %][%|l%](next revision)[%END%][% END %]</li>
-    <li class="last">[% IF rev != youngest_rev %]<a href="[% c.script %]/[% c.repos %]/revision/">[%|l%](youngest revision)[%END%]</a>[% ELSE %][%|l%](youngest revision)[%END%][% END %]</li>
+    <li class="first">[% IF rev > 1 %]<a href="[% c.script %]/[% c.repos | uri %]/revision/?rev=[% rev - 1 %]">[%|l%](previous revision)[%END%]</a>[% ELSE %][%|l%](previous revision)[%END%][% END %]</li>
+    <li>[% IF rev != youngest_rev %]<a href="[% c.script %]/[% c.repos | uri %]/revision/?rev=[% rev + 1 %]">[%|l%](next revision)[%END%]</a>[% ELSE %][%|l%](next revision)[%END%][% END %]</li>
+    <li class="last">[% IF rev != youngest_rev %]<a href="[% c.script %]/[% c.repos | uri %]/revision/">[%|l%](youngest revision)[%END%]</a>[% ELSE %][%|l%](youngest revision)[%END%][% END %]</li>
   </ul>
 </div>
 
@@ -49,26 +49,26 @@
         [% IF path.value.action == 'D' %]
           [% path.key %]
         [% ELSE %]
-          <a href="[% c.script %]/[% c.repos %]/browse[% path.key %]?rev=[% rev %]">[% path.key %]</a>
+          <a href="[% c.script %]/[% c.repos | uri %]/browse[% path.key | url %]?rev=[% rev %]">[% path.key %]</a>
           [% IF path.value.copyfrom %]([%|l%](copied from)[%END%]
-          <a href="[% c.script %]/[% c.repos %]/browse[% path.value.copyfrom %]?rev=[% path.value.copyfromrev %]">[% path.value.copyfrom %]:[% path.value.copyfromrev %]</a>)
+          <a href="[% c.script %]/[% c.repos | uri %]/browse[% path.value.copyfrom | url %]?rev=[% path.value.copyfromrev %]">[% path.value.copyfrom %]:[% path.value.copyfromrev %]</a>)
           [% END %]
         [% END %]
       [% ELSE %]
         [% IF path.value.action == 'D' %]
           [% path.key %]
         [% ELSE %]
-          <a href="[% c.script %]/[% c.repos %]/view[% path.key  %]?rev=[% rev %]">[% path.key %]</a>
+          <a href="[% c.script %]/[% c.repos | uri %]/view[% path.key | url %]?rev=[% rev %]">[% path.key %]</a>
           [% IF path.value.action == 'M' AND diff AND diff_size <= max_diff_size %]
             (<a href="#diff_[% path.key.replace('/', '_') |  replace('%', '_') %]">[%|l%](diff)[%END%]</a>)
           [% END %]
           [% IF path.value.action == 'A' AND diff AND diff_size <= max_diff_size %]
             (<a href="#diff_[% path.key.replace('/', '_') | replace('%', '_') %]">[%|l%](diff)[%END%]</a>)
           [% END %]
-          (<a href="[% c.script %]/[% c.repos %]/checkout[% path.key %]?rev=[% rev %]">[%|l%](checkout)[%END%]</a>)
+          (<a href="[% c.script %]/[% c.repos | uri %]/checkout[% path.key | url %]?rev=[% rev %]">[%|l%](checkout)[%END%]</a>)
         [% END %]
         [% IF path.value.copyfrom %]([%|l%](copied from)[%END%]
-          <a href="[% c.script %]/[% c.repos %]/view[% path.value.copyfrom %]?rev=[% path.value.copyfromrev %]">[% path.value.copyfrom %]:[% path.value.copyfromrev %]</a>)
+          <a href="[% c.script %]/[% c.repos | uri %]/view[% path.value.copyfrom | url %]?rev=[% path.value.copyfromrev %]">[% path.value.copyfrom %]:[% path.value.copyfromrev %]</a>)
         [% END %]
       [% END %]
     </li>

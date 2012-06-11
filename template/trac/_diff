@@ -16,8 +16,8 @@
 
         <thead>
           <tr>
-            <th>[% IF rev1 %]<a href="[% c.script %]/[% c.repos %]/revision?rev=[% rev1 %]">[% rev1 %]</a>[% END %]</th>
-            <th>[% IF rev2 %]<a href="[% c.script %]/[% c.repos %]/revision?rev=[% rev2 %]">[% rev2 %]</a>[% END %]</th>
+            <th>[% IF rev1 %]<a href="[% c.script %]/[% c.repos | uri %]/revision?rev=[% rev1 %]">[% rev1 %]</a>[% END %]</th>
+            <th>[% IF rev2 %]<a href="[% c.script %]/[% c.repos | uri %]/revision?rev=[% rev2 %]">[% rev2 %]</a>[% END %]</th>
             <th>&nbsp;</th>
           </tr>
         </thead>
@@ -35,7 +35,7 @@
 
       [%# Make sure the '...' skipped section is only displayed for
           hunks *after* the first hunk %]
-      [% IF oldline1.defined AND oldline1 != '' AND 
+      [% IF oldline1.defined AND oldline1 != '' AND
             line1 > oldline1 AND change_idx > 0 %]
         <tbody class="skippedlines">
           <tr>
@@ -59,11 +59,11 @@
                   class="add"
                 [% END %]>
 
-	  [%# Work out the classes that apply to this row.
+    [%# Work out the classes that apply to this row.
 
               If this is the first line for this change type, *and*
-	      the previous change type wasn't 'REMOVE' then give this
-	      the class 'first'.
+        the previous change type wasn't 'REMOVE' then give this
+        the class 'first'.
 
               If this is the last line for thie change type, *and*
               the next change type is not 'ADD' then give this the class
@@ -73,9 +73,9 @@
               get the correct class (which results in a border being
               rendered at the top or bottom of the row -- unless this
               is where a removal and an addition butt up to each other;
-              if they do there's no border where they meet. %]              
+              if they do there's no border where they meet. %]
           [% row_classes = [];
-	     prev_idx = change_idx - 1;
+       prev_idx = change_idx - 1;
              next_idx = change_idx + 1;
              row_classes.push('first') IF loop.first
                AND prev_idx >= 0
@@ -99,9 +99,9 @@
               [% END %]><span>[% change.text(line) | html %]</span></td>
           </tr>
 
-	[%# Increment the line numbers.  These may increment unevenly
+  [%# Increment the line numbers.  These may increment unevenly
             depending on whether lines have been added or removed. %]
-	[% SWITCH type %]
+  [% SWITCH type %]
         [% CASE '' %]
           [% line1 = line1 + 1 %]
           [% line2 = line2 + 1 %]

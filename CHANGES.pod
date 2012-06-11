@@ -12,6 +12,28 @@ This is a list of the main changes between different versions of
 SVN::Web.  Please see L<UPDATING.pod> for details about any changes
 you may need to make when updating an SVN::Web installation.
 
+=head2 0.61, released Jun 11, 2012
+
+=over
+
+=item
+
+Template fixes for RT48416
+
+=item
+
+RT24507 closed as the stand alone server was removed in favor of Plack.
+
+=item
+
+RT39707 closed as many perl SVN related issues were resolved elsewhere
+
+=item 
+
+Included patch from RT32041 to authenticate to https
+
+=back
+
 =head2 0.60, released Jun 7, 2012
 
 =over
@@ -21,6 +43,10 @@ you may need to make when updating an SVN::Web installation.
 Pulled out mod_perl1/2 and cgi, replaced with Plack. This probably broke lots of things.
 
 =item
+
+Changed to using Dist::Zilla with MakeMaker (due to .po issues with Module::Build)
+
+=item 
 
 DAGOLDEN recommends using Alien::SVN as dependency, rather than SVN::Core, SVN::Client and SVN::Ra. This is because the SVN perl modules are not published to CPAN.
 

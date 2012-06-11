@@ -5,7 +5,7 @@
 
 <ul>
   [% FOREACH r = repos %]
- <li><a href="[% script %]/[% r %]">[% r %]</a></li>
+ <li><a href="[% script %]/[% r | url %]">[% r %]</a></li>
   [% END %]
 </ul>
 [% ELSE %]
