@@ -4,6 +4,7 @@ package SVN::Web;
 use strict;
 use warnings;
 
+use Encode ();
 use URI::Escape;
 use SVN::Client;
 use SVN::Ra;
@@ -25,7 +26,7 @@ SVN::Web::I18N::add_directory(
     File::Spec->catdir( substr( __FILE__, 0, -3 ), 'I18N' ) );
 SVN::Web::I18N::loc_lang('en');
 
-our $VERSION = 0.61;
+our $VERSION = 0.62;
 
 my $template;
 my $config;
@@ -145,13 +146,13 @@ sub get_repos {
     # warn "REPO_URI: $repo_uri";
 
     eval {
-	my $client = SVN::Client->new( pool => $repospool );
-	my $auth = $client->auth;
+        my $client = SVN::Client->new( pool => $repospool );
+        my $auth = $client->auth;
         $REPOS{$repos}{uri} ||= $repo_uri;
         $REPOS{$repos}{ra}  ||= SVN::Ra->new(
             url  => $repo_uri,
             pool => $repospool,
-	    auth => $auth,
+            auth => $auth,
         );
     };
 
@@ -228,7 +229,7 @@ sub run {
     }
 
     if ( $cfg->{repos} && $REPOS{ $cfg->{repos} } ) {
-        @{ $cfg->{navpaths} } = File::Spec::Unix->splitdir( $cfg->{path} );
+        @{ $cfg->{navpaths} } = map { uri_escape($_) } File::Spec::Unix->splitdir( $cfg->{path} );
         shift @{ $cfg->{navpaths} };
 
         # should use attribute or things alike
@@ -334,7 +335,6 @@ sub psgi_output {
     my $res = $req->new_response(200);
     $res->cookies->{ 'svnweb-lang' } = $cfg->{lang};
 
-    $res->content_type('text/html');
 
     if ( ref $html ) {
 
@@ -348,14 +348,17 @@ sub psgi_output {
                     %{ $html->{data} }
                 }, \$body
             ) or die "Template::process() error: " . $template->error;
-            $res->body( $body );
+
+            $res->content_type('text/html; charset=utf-8');
+            $res->body(Encode::encode('utf8',$body));
         }
         else {
-            $res->body( $html->{body} );
+            $res->content_type($html->{mimetype} || 'text/plain');
+            $res->body($html->{body});
         }
     }
     else {
-
+        $res->content_type('text/plain');
         $res->body($html);
     }
 
@@ -370,7 +373,11 @@ sub get_template {
             COMPILE_DIR  => $config->{tt_compile_dir},
             PRE_CHOMP    => 2,
             POST_CHOMP   => 2,
-            FILTERS      => { l => ( [ \&loc_filter, 1 ] ), }
+            FILTERS      => {
+                l => ( [ \&loc_filter, 1 ] ),
+                anchor => ( [ \&anchor_filter, 1 ] ),
+            },
+            ENCODING     => 'utf8',
         }
     );
 }
@@ -429,6 +436,15 @@ sub loc_filter {
     my $context = shift;
     my @args    = @_;
     return sub { SVN::Web::I18N::loc( $_[0], @args ) };
+}
+
+sub anchor_filter {
+    my $context = shift;
+    return sub {
+        my $str = shift;
+        $str =~ s/[\/% ]/_/g;
+        return $str;
+    };
 }
 
 # Crack a URL and determine the components we need.

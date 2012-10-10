@@ -3,11 +3,12 @@ package SVN::Web::action;
 use strict;
 use warnings;
 
-our $VERSION = 0.53;
+our $VERSION = 0.62;
 
-use POSIX qw();
+use File::Temp ();
+use POSIX ();
 use Time::Local qw(timegm_nocheck);
-use Time::Zone qw();
+use Time::Zone ();
 
 use SVN::Core;
 
@@ -390,6 +391,71 @@ sub rpath {
     my $path = $p || $self->{path};
     $path =~ s{^/}{} if $path;
     return $path
+}
+
+sub svn_get_node_kind {
+    my ($self, $uri, $peg_revision, $revision, $pool) = @_;
+    $uri =~ s/ /%20/g;
+
+    my $node_kind;
+
+    my @args = ($uri, $peg_revision, $revision, sub { $node_kind = $_[1]->kind() }, 0);
+    push @args, $pool if $pool;
+    $self->{repos}{client}->info(@args);
+
+    return $node_kind;
+}
+
+sub svn_get_diff {
+    my ($self, $target1, $rev1, $target2, $rev2, $recursive, $pool) = @_;
+    $target1 =~ s/ /%20/g;
+    $target2 =~ s/ /%20/g;
+
+    my ( $out_h, $out_fn ) = File::Temp::tempfile();
+    my ( $err_h, $err_fn ) = File::Temp::tempfile();
+
+    my @args = ([], $target1, $rev1, $target2, $rev2, $recursive, 1, 0, $out_h, $err_h);
+    push @args, $pool if $pool;
+    $self->{repos}{client}->diff(@args);
+
+    my $out;
+    local $/ = undef;
+    seek($out_h, 0, 0);
+    $out = <$out_h>;
+    unlink( $out_fn ); unlink( $err_fn );
+    close( $out_h ); close( $err_h );
+
+    return $out;
+}
+
+sub ctx_ls {
+    my ($self, $uri) = splice(@_, 0, 2);
+    $uri =~ s/ /%20/g;
+    return $self->{repos}{client}->ls( $uri, @_ );
+}
+
+sub ctx_revprop_get {
+    my ($self, $prop_name, $uri, $rev) = splice(@_, 0, 4);
+    $uri =~ s/ /%20/g;
+    return $self->{repos}{client}->revprop_get( $prop_name, $uri, $rev, @_ );
+}
+
+sub ctx_propget {
+    my ($self, $prop_name, $uri, $rev, $recursive) = splice(@_, 0, 5);
+    $uri =~ s/ /%20/g;
+    return $self->{repos}{client}->propget( $prop_name, $uri, $rev, $recursive, @_ );
+}
+
+sub ctx_cat {
+    my ($self, $fh, $uri, $rev) = splice(@_, 0, 4);
+    $uri =~ s/ /%20/g;
+    return $self->{repos}{client}->cat( $fh, $uri, $rev, @_ );
+}
+
+sub ctx_blame {
+    my ($self, $uri, $start_rev, $end_rev, $cb) = splice(@_, 0, 5);
+    $uri =~ s/ /%20/g;
+    return $self->{repos}{client}->blame( $uri, $start_rev, $end_rev, $cb, @_ );
 }
 
 1;

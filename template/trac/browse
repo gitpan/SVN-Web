@@ -2,7 +2,7 @@
 [% USE Number.Format %]
 
 <div id="jumprev">
-  <form action="[% c.self_uri %]" method="get">
+  <form action="[% c.self_uri | url %]" method="get">
    <div>
     <label for="rev">[%|l%](goto revision)[%END%]</label>
     <input type="text" id="rev" name="rev" value="[% rev %]" size="4" />

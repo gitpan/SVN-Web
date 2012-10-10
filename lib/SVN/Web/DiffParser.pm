@@ -9,8 +9,8 @@ use vars qw( $VERSION );
 use Carp;
 use IO::File;
 
-$VERSION = 0.53;
-#$VERSION = '0.53';
+$VERSION = 0.62;
+#$VERSION = '0.62';
 #$VERSION = eval $VERSION;    # see L<perlmodstyle>
 
 ####################################################
@@ -313,8 +313,7 @@ sub _unified_line {
         return;
     }
 
-    die "Missing \@\@ line before $line at $self->{state}{context}\n"
-      unless exists $change->{line1} and defined $change->{line1};
+    return unless exists $change->{line1} and defined $change->{line1};
 
     if ( $line =~ /^([-+ ])(.*)$/ ) {
         my ( $mod, $text ) = ( $1, $2 );
@@ -697,20 +696,11 @@ Philip Gwyn, E<lt>gwyn-at-cpan.orgE<gt>
 
 Copyright (C) 2006 by Philip Gwyn
 
+Copyright (C) 2012 by Dean Hamstead
+
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
 at your option, any later version of Perl 5 you may have available.
 
 
 =cut
-
-
-$Log: Parser.pm,v $
-Revision 1.3  2006/04/13 01:47:37  fil
-Tweak
-
-Revision 1.2  2006/04/13 01:43:27  fil
-Tweak for move coverage
-Add coverage stanza to Makefile.PL
-Added BUGS and SEE ALSO section
-

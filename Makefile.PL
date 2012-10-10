@@ -44,9 +44,6 @@ my %WriteMakefileArgs = (
     "Number::Format" => 0,
     "POSIX" => 0,
     "Plack" => 0,
-    "SVN::Client" => 0,
-    "SVN::Core" => 0,
-    "SVN::Ra" => 0,
     "Template" => 0,
     "Template::Plugin::Number::Format" => 0,
     "Time::Zone" => 0,
@@ -57,7 +54,7 @@ my %WriteMakefileArgs = (
     "vars" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.61",
+  "VERSION" => "0.62",
   "test" => {
     "TESTS" => "t/*.t"
   }

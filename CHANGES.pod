@@ -12,6 +12,20 @@ This is a list of the main changes between different versions of
 SVN::Web.  Please see L<UPDATING.pod> for details about any changes
 you may need to make when updating an SVN::Web installation.
 
+=head2 0.62, released Oct 10, 2012
+
+=over
+
+=item
+
+Updated psgi file, for some reason I regressed it.
+
+=item
+
+A variety of fixes, notably huge improvements to UTF8 handling graciously contributed by Vladimir Timofeev and diff output fixes
+
+=back
+
 =head2 0.61, released Jun 11, 2012
 
 =over

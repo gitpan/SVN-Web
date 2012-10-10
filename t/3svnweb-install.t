@@ -9,7 +9,7 @@ use File::Temp qw(tempdir);
 use YAML ();
 
 # Make sure that it compiles cleanly
-system $^X, qw(-Iblib/lib -c bin/svnweb-install);
+system "$^X -Iblib/lib -c bin/svnweb-install 2>/dev/null";
 is($? >> 8, 0, 'svnweb-install compiled cleanly');
 
 # Run in a temporary directory, verify that the generated config.yaml parses

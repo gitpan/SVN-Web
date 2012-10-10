@@ -12,7 +12,7 @@ package SVN::Web::Test;
 use strict;
 use warnings;
 
-our $VERSION = 0.61;
+our $VERSION = 0.62;
 
 use File::Path;
 use File::Spec;
@@ -165,7 +165,7 @@ sub create_install {
     my $self = shift;
 
     $self->{install_dir} = tempdir( CLEANUP => 1 );
-    warn "Created $self->{install_dir}\n";
+    #warn "Created $self->{install_dir}\n";
     my $cwd = POSIX::getcwd();
     chdir( $self->{install_dir} );
     my $lib_dir = File::Spec->catdir( $cwd, 'blib', 'lib' );
@@ -203,7 +203,7 @@ sub walk_site {
         my $link_url = $links[$i]->url_abs;
 
         diag sprintf "Fetching %d/%d %s (%s)",
-          $i + 1, $#links + 1, $link_url, $links[$i]->text()
+          $i + 1, $#links + 1, $link_url, $links[$i]->text()||''
           if exists $ENV{TEST_VERBOSE} and $ENV{TEST_VERBOSE};
 
         next if $seen->{$link_url};

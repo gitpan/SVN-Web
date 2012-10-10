@@ -36,7 +36,7 @@
       [%# Make sure the '...' skipped section is only displayed for
           hunks *after* the first hunk %]
       [% IF oldline1.defined AND oldline1 != '' AND
-            line1 > oldline1 AND change_idx > 0 %]
+            line1 > oldline1 AND (change_idx || 0) > 0 %]
         <tbody class="skippedlines">
           <tr>
             <th>&hellip;</th>

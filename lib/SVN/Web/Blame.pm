@@ -5,7 +5,9 @@ use warnings;
 
 use base 'SVN::Web::action';
 
-our $VERSION = 0.53;
+use Encode ();
+
+our $VERSION = 0.62;
 
 =head1 NAME
 
@@ -124,10 +126,7 @@ sub cache_key {
 
 sub run {
     my $self = shift;
-    my $ctx  = $self->{repos}{client};
-    my $ra   = $self->{repos}{ra};
-    my $uri  = $self->{repos}{uri};
-    my $path = $self->{path};
+    my $uri  = $self->{repos}{uri} . $self->{path};
 
     my ( $exp_rev, $yng_rev, $act_rev, $head ) = $self->get_revs();
 
@@ -135,8 +134,8 @@ sub run {
 
     my @blame_details;
 
-    $ctx->blame(
-        "$uri$path",
+    $self->ctx_blame(
+        $uri,
         1, $rev,
         sub {
             push @blame_details,
@@ -145,15 +144,15 @@ sub run {
                 rev     => $_[1],
                 author  => $_[2],
                 date    => $self->format_svn_timestamp( $_[3] ),
-                line    => $_[4],
+                line    => Encode::decode('utf8',$_[4]),
               };
         }
     );
 
     my $mime_type;
-    my $props = $ctx->propget( 'svn:mime-type', $uri . $path, $rev, 0 );
-    if ( exists $props->{ $uri . $path } ) {
-        $mime_type = $props->{ $uri . $path };
+    my $props = $self->ctx_propget( 'svn:mime-type', $uri, $rev, 0 );
+    if ( exists $props->{$uri} ) {
+        $mime_type = $props->{$uri};
     }
     else {
         $mime_type = 'text/plain';

@@ -3,12 +3,13 @@ package SVN::Web::Log;
 use strict;
 use warnings;
 
+use base 'SVN::Web::action';
+
+use Encode ();
 use SVN::Core;
 use SVN::Ra;
 
-use base 'SVN::Web::action';
-
-our $VERSION = 0.53;
+our $VERSION = 0.62;
 
 =head1 NAME
 
@@ -153,7 +154,7 @@ sub _log {
         rev    => $rev,
         author => $author,
         date   => $self->format_svn_timestamp($date),
-        msg    => $msg,
+        msg    => Encode::decode('utf8',$msg),
     };
 
     $data->{paths} = {
@@ -196,14 +197,12 @@ sub _get_limit {
 
 sub run {
     my $self  = shift;
-    my $ctx   = $self->{repos}{client};
     my $ra    = $self->{repos}{ra};
-    my $uri   = $self->{repos}{uri};
     my $limit = $self->_get_limit();
     my $rev   = $self->{cgi}->param('rev') || $ra->get_latest_revnum();
-    my $path  = $self->{path};
+    my $uri   = $self->{repos}{uri};
+    $uri .= '/'.$self->rpath if $self->rpath;
 
-    $path =~ s{/+$}{};
     my ( undef, $yng_rev, undef, $head ) = $self->get_revs();
 
     # Handle log paging
@@ -215,8 +214,7 @@ sub run {
             # entries then we're on the last page.
             #
             # If we're not on the last page then pop off the extra log entry
-        $ra->get_log( [ $self->rpath ],
-            $rev, 1, $limit + 1, 1, 1, sub { $self->_log(@_) } );
+        $ra->get_log( [ $self->rpath ], $rev, 1, $limit + 1, 1, 1, sub { $self->_log(@_) } );
 
         $at_oldest = @{ $self->{REVS} } <= $limit;
 
@@ -225,24 +223,14 @@ sub run {
     else {
 
         # We must be displaying to the oldest rev, so no paging required
-        $ra->get_log( [ $self->rpath ],
-            $rev, 1, $limit, 1, 1, sub { $self->_log(@_) } );
+        $ra->get_log( [ $self->rpath ], $rev, 1, $limit, 1, 1, sub { $self->_log(@_) } );
 
         $at_oldest = 1;
     }
 
     #    $self->_resolve_changed_paths();
-
-    my $is_dir;
-    $ctx->info(
-        "$uri$path",
-        $rev, $rev,
-        sub {
-            my ( $path, $info, $pool ) = @_;
-            $is_dir = $info->kind() == $SVN::Node::dir;
-        },
-        0
-    );
+    my $node_kind = $self->svn_get_node_kind($uri, $rev, $rev);
+    my $is_dir = $node_kind == $SVN::Node::dir;
 
     return {
         template => 'log',
@@ -269,22 +257,17 @@ sub run {
 # XXX Very similar code in Revision.pm, needs refactoring
 sub _resolve_changed_paths {
     my $self = shift;
-    my $ctx  = $self->{repos}{client};
-    my $ra   = $self->{repos}{ra};
     my $uri  = $self->{repos}{uri};
 
     my $subpool = SVN::Pool->new();
-    my $node_kind;
 
     foreach my $data ( @{ $self->{REVS} } ) {
         foreach my $path ( keys %{ $data->{paths} } ) {
-            $subpool->clear();
-
-            $ctx->info( "$uri$path", $data->{rev}, $data->{rev},
-                sub { $node_kind = $_[1]->kind() },
-                0, $subpool );
+            my $node_kind = $self->svn_get_node_kind("$uri$path", $data->{rev}, $data->{rev}, $subpool);
 
             $data->{paths}{$path}{isdir} = $node_kind == $SVN::Node::dir;
+
+            $subpool->clear();
         }
     }
 }

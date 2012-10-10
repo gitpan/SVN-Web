@@ -5,7 +5,9 @@ use warnings;
 
 use base 'SVN::Web::action';
 
-our $VERSION = 0.53;
+use Encode ();
+
+our $VERSION = 0.62;
 
 =head1 NAME
 
@@ -109,7 +111,7 @@ sub _log {
         rev    => $rev,
         author => $author,
         date   => $self->format_svn_timestamp($date),
-        msg    => $msg
+        msg    => Encode::decode('utf8',$msg),
     };
 }
 
@@ -124,29 +126,29 @@ sub cache_key {
 
 sub run {
     my $self = shift;
-    my $ctx  = $self->{repos}{client};
     my $ra   = $self->{repos}{ra};
+
     my $uri  = $self->{repos}{uri};
-    my $path = $self->{path};
+    $uri .= '/'.$self->rpath if $self->rpath;
 
     my ( $exp_rev, $yng_rev, $act_rev, $head ) = $self->get_revs();
 
     my $rev = $act_rev;
 
     # Get the log for this revision of the file
-    $ra->get_log( [ $self->rpath ],
-        $rev, $rev, 1, 1, 1, sub { $self->{REV} = $self->_log(@_) } );
+    $ra->get_log( [ $self->rpath ], $rev, $rev, 1, 1, 1, sub { $self->{REV} = $self->_log(@_) } );
 
     # Get the text for this revision of the file
     my ( $fh, $fc ) = ( undef, '' );
     open( $fh, '>', \$fc );
-    $ctx->cat( $fh, $uri . $path, $rev );
+    $self->ctx_cat( $fh, $uri, $rev );
     close($fc);
+    $fc = Encode::decode('utf8', $fc);
 
     my $mime_type;
-    my $props = $ctx->propget( 'svn:mime-type', $uri . $path, $rev, 0 );
-    if ( exists $props->{ $uri . $path } ) {
-        $mime_type = $props->{ $uri . $path };
+    my $props = $self->ctx_propget( 'svn:mime-type', $uri, $rev, 0 );
+    if ( exists $props->{$uri} ) {
+        $mime_type = $props->{$uri};
     }
     else {
         $mime_type = 'text/plain';

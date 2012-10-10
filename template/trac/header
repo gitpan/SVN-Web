@@ -42,7 +42,7 @@
       [% END %]
 
       <div id="language-selection">
-        <form action="[% c.self_uri %]">
+        <form action="[% c.self_uri | url %]">
           <select name="lang" onchange="this.form.submit();">
           [% FOREACH curlang IN c.languages -%]
             <option value="[% curlang.key %]"

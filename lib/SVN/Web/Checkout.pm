@@ -5,9 +5,10 @@ use warnings;
 
 use base 'SVN::Web::action';
 
+use Encode ();
 use SVN::Web::X;
 
-our $VERSION = 0.53;
+our $VERSION = 0.62;
 
 =head1 NAME
 
@@ -61,32 +62,30 @@ The given path is not a file in the given revision.
 
 sub run {
     my $self = shift;
-    my $ctx  = $self->{repos}{client};
     my $ra   = $self->{repos}{ra};
-    my $uri  = $self->{repos}{uri};
     my $rev  = $self->{cgi}->param('rev') || $ra->get_latest_revnum();
-    my $path = $self->{path};
 
-    my $node_kind;
-    $ctx->info( "$uri$path", $rev, $rev, sub { $node_kind = $_[1]->kind(); },
-        0 );
+    my $uri  = $self->{repos}{uri};
+    $uri .= '/'.$self->rpath if $self->rpath;
+
+    my $node_kind = $self->svn_get_node_kind($uri, $rev, $rev);
 
     if ( $node_kind != $SVN::Node::file ) {
         SVN::Web::X->throw(
             error => '(path %1 is not a file in revision %2)',
-            vars  => [ $path, $rev ]
+            vars  => [ $self->rpath, $rev ]
         );
     }
 
     my ( $fh, $fc ) = ( undef, '' );
     open( $fh, '>', \$fc );
-    $ctx->cat( $fh, $uri . $path, $rev );
+    $self->ctx_cat( $fh, $uri, $rev );
     close($fh);
 
     my $mime_type;
-    my $props = $ctx->propget( 'svn:mime-type', $uri . $path, $rev, 0 );
-    if ( exists $props->{ $uri . $path } ) {
-        $mime_type = $props->{ $uri . $path };
+    my $props = $self->ctx_propget( 'svn:mime-type', $uri, $rev, 0 );
+    if ( exists $props->{$uri} ) {
+        $mime_type = $props->{$uri};
     }
     else {
         $mime_type = 'text/plain';

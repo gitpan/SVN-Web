@@ -5,13 +5,13 @@ use warnings;
 
 use base 'SVN::Web::action';
 
-use File::Temp;
+use Encode ();
 use SVN::Core;
 use SVN::Ra;
 use SVN::Web::X;
 use SVN::Web::DiffParser;
 
-our $VERSION = 0.53;
+our $VERSION = 0.62;
 
 =head1 NAME
 
@@ -167,7 +167,7 @@ sub _log {
         rev    => $rev,
         author => $author,
         date   => $self->format_svn_timestamp($date),
-        msg    => $msg,
+        msg    => Encode::decode('utf8',$msg),
     };
 
     $data->{paths} = {
@@ -196,10 +196,10 @@ sub run {
 
     $self->{opts} = { %default_opts, %{ $self->{opts} } };
 
-    my $ctx  = $self->{repos}{client};
     my $ra   = $self->{repos}{ra};
-    my $uri  = $self->{repos}{uri};
     my $yrev = $ra->get_latest_revnum();
+
+    my $uri  = $self->{repos}{uri};
 
     my $rev           = $self->{cgi}->param('rev');
     my $max_diff_size = $self->{opts}{max_diff_size};
@@ -219,24 +219,10 @@ sub run {
     my $diff;
     my $diff_size = 0;
     if ( $self->{opts}{show_diff} ) {
-        my ( $out_h, $out_fn ) = File::Temp::tempfile();
-        my ( $err_h, $err_fn ) = File::Temp::tempfile();
-
-        $ctx->diff( [], $uri, $rev - 1, $uri, $rev, 1, 1, 0, $out_h, $err_h );
-
-        my $out_c;
-        local $/ = undef;
-        seek( $out_h, 0, 0 );
-        $out_c = <$out_h>;
-
-        unlink($out_fn);
-        unlink($err_fn);
-        close($out_h);
-        close($err_h);
-
-        $diff_size = length($out_c);
+        my $out = Encode::decode('utf8', $self->svn_get_diff($uri, $rev - 1, $uri, $rev, 1));
+        $diff_size = length($out);
         if ( $diff_size <= $max_diff_size ) {
-            $diff = SVN::Web::DiffParser->new($out_c);
+            $diff = SVN::Web::DiffParser->new($out);
         }
     }
 
@@ -263,26 +249,20 @@ sub run {
 # XXX Very similar code in Log.pm, needs refactoring
 sub _resolve_changed_paths {
     my $self    = shift;
-    my $ctx     = $self->{repos}{client};
-    my $ra      = $self->{repos}{ra};
     my $uri     = $self->{repos}{uri};
-    my $subpool = SVN::Pool->new();
     my $data    = $self->{REV};
 
-    my $node_kind;
-
+    my $subpool = SVN::Pool->new();
     # Set the 'isdir' key
     foreach my $path ( keys %{ $data->{paths} } ) {
-        $subpool->clear();
-
         # Ignore deleted nodes
         if ( $data->{paths}{$path}{action} ne 'D' ) {
-            $ctx->info( "$uri$path", $data->{rev}, $data->{rev},
-                sub { $node_kind = $_[1]->kind() },
-                0, $subpool );
+            my $node_kind = $self->svn_get_node_kind("$uri$path", $data->{rev}, $data->{rev}, $subpool);
 
             $data->{paths}{$path}{isdir} = $node_kind == $SVN::Node::dir;
         }
+
+        $subpool->clear();
     }
 }
 

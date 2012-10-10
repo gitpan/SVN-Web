@@ -12,7 +12,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.300018, CPAN::Meta::Converter version 2.120921'
+generated_by: 'Dist::Zilla version 4.300025, CPAN::Meta::Converter version 2.120921'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -42,9 +42,6 @@ requires:
   Number::Format: 0
   POSIX: 0
   Plack: 0
-  SVN::Client: 0
-  SVN::Core: 0
-  SVN::Ra: 0
   Template: 0
   Template::Plugin::Number::Format: 0
   Time::Zone: 0
@@ -55,4 +52,4 @@ requires:
   strict: 0
   vars: 0
   warnings: 0
-version: 0.61
+version: 0.62
