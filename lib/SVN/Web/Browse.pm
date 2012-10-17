@@ -10,7 +10,7 @@ use SVN::Ra;
 use SVN::Client;
 use SVN::Web::X;
 
-our $VERSION = 0.62;
+our $VERSION = 0.63;
 
 =head1 NAME
 
@@ -170,11 +170,11 @@ sub run {
     my $dirents = $self->ctx_ls( $uri, $rev, 0 );
 
     my $entries = [];
-    my ( $name, $dirent );
     my $current_time = time();
 
     my $base_path = $self->rpath;
-    while ( ( $name, $dirent ) = each %{$dirents} ) {
+    while ( my ( $svn_name, $dirent ) = each %{$dirents} ) {
+        my $name = Encode::decode('utf8',$svn_name);
         my $node_kind = $dirent->kind();
 
         my @log_result = $self->recent_interesting_rev( "$base_path/$name", $rev );
@@ -189,8 +189,8 @@ sub run {
             author    => $dirent->last_author(),
             has_props => $dirent->has_props(),
             time      => $dirent->time() / 1_000_000,
-            age => $current_time - ( $dirent->time() / 1_000_000 ),
-            msg => Encode::decode('utf8',$log_result[4]),
+            age       => $current_time - ( $dirent->time() / 1_000_000 ),
+            msg       => Encode::decode('utf8',$log_result[4]),
           };
     }
 

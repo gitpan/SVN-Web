@@ -81,8 +81,17 @@ my $test_sub = sub {
                                  | mime=text/plain
 			       )}x)) {
 	Test::HTML::Tidy::html_tidy_ok($tidy, $mech->content(),
-				       '  and is valid HTML')
+				       '  and is valid HTML ('.$mech->uri.')')
 	    or diag($mech->content());
+    }
+
+    # Make sure that all local links (like <a href="#anchor"...) has
+    # appropriate anchors in code
+    my @local_links = $mech->find_all_links(tag=>'a',url_regex=>qr/^\#/);
+    foreach (@local_links) {
+        my $name = $_->url;
+        $name =~ s/^#//;
+        $mech->content_like(qr/(?:id|name)=['"]$name(?:['"])/, "  and has element with name='$name' (".$mech->uri.")");
     }
 
     if($can_parse_rss and ($mech->uri() =~ m{/rss/})) {

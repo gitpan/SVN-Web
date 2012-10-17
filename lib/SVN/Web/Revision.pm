@@ -11,7 +11,7 @@ use SVN::Ra;
 use SVN::Web::X;
 use SVN::Web::DiffParser;
 
-our $VERSION = 0.62;
+our $VERSION = 0.63;
 
 =head1 NAME
 
@@ -172,7 +172,7 @@ sub _log {
 
     $data->{paths} = {
         map {
-            $_ => {
+            $self->decode_svn_uri($_) => {
                 action      => $paths->{$_}->action(),
                 copyfrom    => $paths->{$_}->copyfrom_path(),
                 copyfromrev => $paths->{$_}->copyfrom_rev(),

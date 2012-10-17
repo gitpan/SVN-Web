@@ -31,6 +31,7 @@ my %WriteMakefileArgs = (
   "PREREQ_PM" => {
     "Alien::SVN" => 0,
     "Carp" => 0,
+    "Encode" => 0,
     "Exception::Class" => "1.22",
     "File::Basename" => 0,
     "File::Path" => 0,
@@ -54,7 +55,7 @@ my %WriteMakefileArgs = (
     "vars" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.62",
+  "VERSION" => "0.63",
   "test" => {
     "TESTS" => "t/*.t"
   }

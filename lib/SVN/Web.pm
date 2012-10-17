@@ -26,7 +26,7 @@ SVN::Web::I18N::add_directory(
     File::Spec->catdir( substr( __FILE__, 0, -3 ), 'I18N' ) );
 SVN::Web::I18N::loc_lang('en');
 
-our $VERSION = 0.62;
+our $VERSION = 0.63;
 
 my $template;
 my $config;
@@ -229,7 +229,7 @@ sub run {
     }
 
     if ( $cfg->{repos} && $REPOS{ $cfg->{repos} } ) {
-        @{ $cfg->{navpaths} } = map { uri_escape($_) } File::Spec::Unix->splitdir( $cfg->{path} );
+        @{ $cfg->{navpaths} } = File::Spec::Unix->splitdir( $cfg->{path} );
         shift @{ $cfg->{navpaths} };
 
         # should use attribute or things alike
@@ -338,7 +338,6 @@ sub psgi_output {
 
     if ( ref $html ) {
 
-        $cfg->{path} = encode_path( $cfg->{path} );
         if ( $html->{template} ) {
             my $body;
             $template->process(
@@ -452,8 +451,7 @@ sub crack_url {
 
     my $obj = shift;
 
-    my $path_info = $obj->path;
-    my $uri       = $obj->request_uri;
+    my $path_info = Encode::decode('utf8',$obj->path);
 
     # warn "PATH_INFO: $path_info";
 
@@ -547,18 +545,6 @@ sub crack_url {
     #    warn "BASE: $base";
 
     return ( $action, $base, $repo, $script, $path );
-}
-
-sub encode_path {
-    my $path = shift;
-
-    return unless defined $path;
-
-    my @path = split( '/', $path );
-
-    $path = join( '/', map { uri_escape($_) } @path );
-
-    return $path;
 }
 
 1;

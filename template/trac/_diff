@@ -5,7 +5,7 @@
     <li>[%|l(diff_size, max_diff_size)%](diff too large: %1 %2)[%END%]</li>
   [% ELSE %]
     [% FOREACH filename IN diff.files.unique.sort %]
-    <li class="entry" id="diff__[% filename.replace('/', '_') | uri | html | replace('%', '_') %]">
+    <li class="entry" id="diff_[% '/' _ filename | uri | anchor %]">
       <h2>[% filename %]</h2>
       <table class="inline">
         <colgroup>

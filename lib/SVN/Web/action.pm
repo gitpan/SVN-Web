@@ -3,8 +3,9 @@ package SVN::Web::action;
 use strict;
 use warnings;
 
-our $VERSION = 0.62;
+our $VERSION = 0.63;
 
+use Encode;
 use File::Temp ();
 use POSIX ();
 use Time::Local qw(timegm_nocheck);
@@ -236,20 +237,13 @@ to a log message receiver.
 =cut
 
 sub recent_interesting_rev {
-    my $self = shift;
-    my $path = shift;
-    my $rev  = shift;
+    my ($self, $path, $rev) = @_;
 
     my $ra = $self->{repos}{ra};
 
     my @log_result;
 
-    # warn "RPATH( $path )";
-    # warn "REV $rev";
-    # warn "BASE PATH IS " . $ra->get_repos_root;
-
-    $ra->get_log( [ $self->rpath($path) ],
-        $rev, 1, 1, 0, 1, sub { @log_result = @_; } );
+    $ra->get_log( [ Encode::encode('utf8',$self->rpath($path)) ], $rev, 1, 1, 0, 1, sub { @log_result = @_; } );
 
     return @log_result if wantarray();
     return $log_result[1];    # Revision number
@@ -395,11 +389,10 @@ sub rpath {
 
 sub svn_get_node_kind {
     my ($self, $uri, $peg_revision, $revision, $pool) = @_;
-    $uri =~ s/ /%20/g;
 
     my $node_kind;
 
-    my @args = ($uri, $peg_revision, $revision, sub { $node_kind = $_[1]->kind() }, 0);
+    my @args = ($self->encode_svn_uri($uri), $peg_revision, $revision, sub { $node_kind = $_[1]->kind() }, 0);
     push @args, $pool if $pool;
     $self->{repos}{client}->info(@args);
 
@@ -408,13 +401,11 @@ sub svn_get_node_kind {
 
 sub svn_get_diff {
     my ($self, $target1, $rev1, $target2, $rev2, $recursive, $pool) = @_;
-    $target1 =~ s/ /%20/g;
-    $target2 =~ s/ /%20/g;
 
     my ( $out_h, $out_fn ) = File::Temp::tempfile();
     my ( $err_h, $err_fn ) = File::Temp::tempfile();
 
-    my @args = ([], $target1, $rev1, $target2, $rev2, $recursive, 1, 0, $out_h, $err_h);
+    my @args = ([], $self->encode_svn_uri($target1), $rev1, $self->encode_svn_uri($target2), $rev2, $recursive, 1, 0, $out_h, $err_h);
     push @args, $pool if $pool;
     $self->{repos}{client}->diff(@args);
 
@@ -430,32 +421,40 @@ sub svn_get_diff {
 
 sub ctx_ls {
     my ($self, $uri) = splice(@_, 0, 2);
-    $uri =~ s/ /%20/g;
-    return $self->{repos}{client}->ls( $uri, @_ );
+    return $self->{repos}{client}->ls( $self->encode_svn_uri($uri), @_ );
 }
 
 sub ctx_revprop_get {
     my ($self, $prop_name, $uri, $rev) = splice(@_, 0, 4);
-    $uri =~ s/ /%20/g;
-    return $self->{repos}{client}->revprop_get( $prop_name, $uri, $rev, @_ );
+    return $self->{repos}{client}->revprop_get( $prop_name, $self->encode_svn_uri($uri), $rev, @_ );
 }
 
 sub ctx_propget {
     my ($self, $prop_name, $uri, $rev, $recursive) = splice(@_, 0, 5);
-    $uri =~ s/ /%20/g;
-    return $self->{repos}{client}->propget( $prop_name, $uri, $rev, $recursive, @_ );
+    return $self->{repos}{client}->propget( $prop_name, $self->encode_svn_uri($uri), $rev, $recursive, @_ );
 }
 
 sub ctx_cat {
     my ($self, $fh, $uri, $rev) = splice(@_, 0, 4);
-    $uri =~ s/ /%20/g;
-    return $self->{repos}{client}->cat( $fh, $uri, $rev, @_ );
+    return $self->{repos}{client}->cat( $fh, $self->encode_svn_uri($uri), $rev, @_ );
 }
 
 sub ctx_blame {
     my ($self, $uri, $start_rev, $end_rev, $cb) = splice(@_, 0, 5);
-    $uri =~ s/ /%20/g;
-    return $self->{repos}{client}->blame( $uri, $start_rev, $end_rev, $cb, @_ );
+    return $self->{repos}{client}->blame( $self->encode_svn_uri($uri), $start_rev, $end_rev, $cb, @_ );
+}
+
+sub encode_svn_uri {
+    my $uri = Encode::encode('utf8', $_[1]);
+    # same as in svn_path_uri_encode (see subversion/libsvn_subr/path.c)
+    $uri =~ s#([^\-\!\$\&\'\(\)\*\+\,\.\/\:\=\@\~\_0-9A-Za-z])#sprintf("%%%02X",ord($1))#eg;
+    return $uri;
+}
+
+sub decode_svn_uri {
+    my ($self, $uri) = @_;
+    $uri =~ s#%([0-9A-Fa-f]{2})#chr(hex($1))#eg;
+    return Encode::decode('utf8', $uri);
 }
 
 1;

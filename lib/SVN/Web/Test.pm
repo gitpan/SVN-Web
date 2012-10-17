@@ -12,7 +12,7 @@ package SVN::Web::Test;
 use strict;
 use warnings;
 
-our $VERSION = 0.62;
+our $VERSION = 0.63;
 
 use File::Path;
 use File::Spec;

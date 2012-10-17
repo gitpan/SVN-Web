@@ -90,6 +90,7 @@ t/repos/hooks/pre-unlock.tmpl
 t/repos/hooks/start-commit.tmpl
 t/repos/locks/db-logs.lock
 t/repos/locks/db.lock
+t/svn-uris.t
 t/test_repo.dump
 t/timedate_format.t
 template/plain/browse

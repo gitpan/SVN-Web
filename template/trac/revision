@@ -60,10 +60,10 @@
         [% ELSE %]
           <a href="[% c.script %]/[% c.repos | uri %]/view[% path.key | url %]?rev=[% rev %]">[% path.key %]</a>
           [% IF path.value.action == 'M' AND diff AND diff_size <= max_diff_size %]
-            (<a href="#diff_[% path.key | anchor %]">[%|l%](diff)[%END%]</a>)
+            (<a href="#diff_[% path.key | uri | anchor %]">[%|l%](diff)[%END%]</a>)
           [% END %]
           [% IF path.value.action == 'A' AND diff AND diff_size <= max_diff_size %]
-            (<a href="#diff_[% path.key | anchor %]">[%|l%](diff)[%END%]</a>)
+            (<a href="#diff_[% path.key | uri | anchor %]">[%|l%](diff)[%END%]</a>)
           [% END %]
           (<a href="[% c.script %]/[% c.repos | uri %]/checkout[% path.key | url %]?rev=[% rev %]">[%|l%](checkout)[%END%]</a>)
         [% END %]

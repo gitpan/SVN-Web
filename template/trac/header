@@ -35,7 +35,7 @@
                   <span class="sep">/</span>   [% p %]
                 [% END %]
               [% ELSE %]
-                <span class="sep">/</span>    <a href="[% url %]browse[% urlpath.join('/') %][% revstr %]">[% p %]</a>
+                <span class="sep">/</span>    <a href="[% url %]browse[% urlpath.join('/') | url %][% revstr %]">[% p %]</a>
               [% END %]
           [% END %] @ [% at_head ? 'HEAD' : "r$rev" %]</h1>
       </div>

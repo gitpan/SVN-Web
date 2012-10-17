@@ -38,6 +38,7 @@
          "requires" : {
             "Alien::SVN" : "0",
             "Carp" : "0",
+            "Encode" : "0",
             "Exception::Class" : "1.22",
             "File::Basename" : "0",
             "File::Path" : "0",
@@ -73,6 +74,6 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.62"
+   "version" : "0.63"
 }
 
